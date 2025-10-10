@@ -79,6 +79,12 @@ This will:
    npm run demo:query
    ```
 
+7. **Monitor with LocalStack** (optional)
+   ```bash
+   npm run localstack:logs    # View LocalStack service logs
+   npm run stack:status       # Check CloudFormation stack status
+   ```
+
 ## 📁 Project Structure
 
 ```
@@ -267,6 +273,8 @@ npm run clean           # Clean build artifacts
 npm run localstack:start    # Start LocalStack
 npm run localstack:stop     # Stop LocalStack
 
+npm run localstack:logs     # View LocalStack logs
+
 # CloudFormation
 npm run stack:deploy        # Deploy DynamoDB stack
 npm run stack:delete        # Delete DynamoDB stack
@@ -295,6 +303,20 @@ AWS_DEFAULT_REGION=eu-west-1
 DYNAMODB_ENDPOINT=http://localhost:4566
 TABLE_NAME=SingleTable
 ```
+
+### LocalStack Management
+
+LocalStack Community Edition provides API access to AWS services locally:
+
+**Available interfaces:**
+- REST API endpoints at http://localhost:4566
+- AWS CLI with `--endpoint-url=http://localhost:4566`
+- AWS SDKs configured for LocalStack endpoint
+
+**Management:**
+- **View logs**: `npm run localstack:logs`
+- **Check status**: `npm run stack:status`
+- **Browse via CLI**: Use AWS CLI commands with LocalStack endpoint
 
 ## 💡 Examples
 

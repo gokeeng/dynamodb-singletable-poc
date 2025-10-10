@@ -10,6 +10,8 @@
     "clean": "rm -rf dist",
     "localstack:start": "docker-compose up -d",
     "localstack:stop": "docker-compose down",
+
+    "localstack:logs": "docker-compose logs -f localstack",
     "stack:deploy": "aws --endpoint-url=http://localhost:4566 cloudformation deploy --template-file infrastructure/dynamodb-stack.yml --stack-name dynamodb-singletable --region eu-west-1",
     "stack:delete": "aws --endpoint-url=http://localhost:4566 cloudformation delete-stack --stack-name dynamodb-singletable --region eu-west-1",
     "stack:status": "aws --endpoint-url=http://localhost:4566 cloudformation describe-stacks --stack-name dynamodb-singletable --region eu-west-1",
