@@ -1,0 +1,1 @@
+# dynamodb-singletable-poc
