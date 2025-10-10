@@ -1,0 +1,124 @@
+import { DynamoDBService } from '../dal/dynamodb-service';
+import { User, UserEntity, UserStatus, KeyBuilder } from '../models';
+
+export class UserService {
+  constructor(private dynamoService: DynamoDBService) {}
+
+  /**
+   * Create a new user
+   */
+  async createUser(userData: Omit<User, keyof import('../models').BaseEntity>): Promise<User> {
+    const user = UserEntity.create(userData);
+    return await this.dynamoService.putItem(user);
+  }
+
+  /**
+   * Get user by ID
+   */
+  async getUserById(userId: string): Promise<User | null> {
+    const pk = KeyBuilder.userPK(userId);
+    const sk = KeyBuilder.userSK();
+    return await this.dynamoService.getItem<User>(pk, sk);
+  }
+
+  /**
+   * Get user by email using GSI1
+   */
+  async getUserByEmail(email: string): Promise<User | null> {
+    const gsi1Keys = KeyBuilder.userByEmailGSI1(email);
+    const result = await this.dynamoService.queryGSI1<User>(
+      gsi1Keys.GSI1PK,
+      gsi1Keys.GSI1SK
+    );
+    
+    return result.items.length > 0 ? result.items[0]! : null;
+  }
+
+  /**
+   * Update user information
+   */
+  async updateUser(
+    userId: string, 
+    updates: Partial<Pick<User, 'FirstName' | 'LastName' | 'Phone' | 'Address' | 'Preferences'>>
+  ): Promise<User> {
+    const pk = KeyBuilder.userPK(userId);
+    const sk = KeyBuilder.userSK();
+    return await this.dynamoService.updateItem<User>(pk, sk, updates);
+  }
+
+  /**
+   * Update user status
+   */
+  async updateUserStatus(userId: string, status: UserStatus): Promise<User> {
+    const pk = KeyBuilder.userPK(userId);
+    const sk = KeyBuilder.userSK();
+    return await this.dynamoService.updateItem<User>(pk, sk, { Status: status });
+  }
+
+  /**
+   * Delete user
+   */
+  async deleteUser(userId: string): Promise<void> {
+    const pk = KeyBuilder.userPK(userId);
+    const sk = KeyBuilder.userSK();
+    await this.dynamoService.deleteItem(pk, sk);
+  }
+
+  /**
+   * Get users by organization using GSI2
+   */
+  async getUsersByOrganization(organizationId: string): Promise<User[]> {
+    const orgPK = KeyBuilder.organizationPK(organizationId);
+    const result = await this.dynamoService.queryGSI2<User>(orgPK);
+    
+    return result.items;
+  }
+
+  /**
+   * Search users by name (scan operation - use carefully)
+   */
+  async searchUsersByName(searchTerm: string): Promise<User[]> {
+    // This is a scan operation which is expensive - only for demo purposes
+    // In production, consider using ElasticSearch or other search solutions
+    const result = await this.dynamoService.queryByPKAndSK<User>(
+      'USER#',
+      'begins_with(PK, :pk)',
+      'USER#',
+      {
+        filterExpression: 'contains(#firstName, :search) OR contains(#lastName, :search)',
+        expressionAttributeNames: {
+          '#firstName': 'FirstName',
+          '#lastName': 'LastName'
+        },
+        expressionAttributeValues: {
+          ':search': searchTerm
+        }
+      }
+    );
+
+    return result.items;
+  }
+
+  /**
+   * Get all active users (scan operation - use carefully)
+   */
+  async getActiveUsers(limit?: number): Promise<User[]> {
+    const result = await this.dynamoService.queryByPKAndSK<User>(
+      'USER#',
+      'begins_with(PK, :pk)',
+      'USER#',
+      {
+        filterExpression: '#status = :status',
+        expressionAttributeNames: {
+          '#status': 'Status'
+        },
+        expressionAttributeValues: {
+          ':status': UserStatus.ACTIVE
+        },
+        limit
+      }
+    );
+
+    return result.items;
+  }
+}

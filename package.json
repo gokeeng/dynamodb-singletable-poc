@@ -1,0 +1,52 @@
+{
+  "name": "dynamodb-singletable-poc",
+  "version": "1.0.0",
+  "description": "A proof of concept demonstrating DynamoDB single table design patterns",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "localstack:start": "docker-compose up -d",
+    "localstack:stop": "docker-compose down",
+    "stack:deploy": "aws --endpoint-url=http://localhost:4566 cloudformation deploy --template-file infrastructure/dynamodb-stack.yml --stack-name dynamodb-singletable --region us-east-1",
+    "stack:delete": "aws --endpoint-url=http://localhost:4566 cloudformation delete-stack --stack-name dynamodb-singletable --region us-east-1",
+    "stack:status": "aws --endpoint-url=http://localhost:4566 cloudformation describe-stacks --stack-name dynamodb-singletable --region us-east-1",
+    "setup": "./scripts/setup.sh",
+    "fix-docker": "./scripts/fix-docker.sh",
+    "demo:seed": "./scripts/with-env.sh ts-node src/examples/seed-data.ts",
+    "demo:query": "./scripts/with-env.sh ts-node src/examples/query-examples.ts",
+    "demo:all": "npm run demo:seed && npm run demo:query",
+    "test-setup": "./scripts/test-setup.sh",
+    "git:add-all": "git add .",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
+  },
+  "keywords": [
+    "dynamodb",
+    "single-table",
+    "typescript",
+    "localstack",
+    "aws",
+    "nosql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "eslint": "^8.51.0",
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.423.0",
+    "@aws-sdk/lib-dynamodb": "^3.423.0",
+    "uuid": "^9.0.1",
+    "@types/uuid": "^9.0.5"
+  }
+}

@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DynamoDB Single Table Design for Multi-Entity Storage'
+
+Parameters:
+  TableName:
+    Type: String
+    Default: SingleTable
+    Description: Name of the DynamoDB table
+  
+  Environment:
+    Type: String
+    Default: local
+    AllowedValues: [local, dev, staging, prod]
+    Description: Environment name
+
+Resources:
+  # Main DynamoDB Table with Single Table Design
+  SingleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      BillingMode: PAY_PER_REQUEST  # On-demand billing for simplicity
+      
+      # Primary Key Structure
+      # PK = Partition Key (Entity Type + ID)
+      # SK = Sort Key (Entity Type + Additional Info)
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
+      
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      
+      # Global Secondary Index 1 - For inverse lookups
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        
+        # Global Secondary Index 2 - For additional access patterns
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      
+      # Point-in-time recovery
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      
+      # Server-side encryption
+      SSESpecification:
+        SSEEnabled: true
+      
+      # Stream configuration for change data capture
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: SingleTableDesignPOC
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  TableName:
+    Description: Name of the DynamoDB table
+    Value: !Ref SingleTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TableName'
+  
+  TableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt SingleTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TableArn'
+  
+  StreamArn:
+    Description: ARN of the DynamoDB stream
+    Value: !GetAtt SingleTable.StreamArn
+    Export:
+      Name: !Sub '${AWS::StackName}-StreamArn'
