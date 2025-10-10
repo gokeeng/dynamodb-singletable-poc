@@ -6,7 +6,7 @@ echo "🧪 Testing LocalStack connectivity..."
 
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
-export AWS_DEFAULT_REGION=us-east-1
+export AWS_DEFAULT_REGION=eu-west-1
 
 # Test LocalStack health
 echo "1. Testing LocalStack health..."
@@ -20,7 +20,7 @@ fi
 
 # Test DynamoDB service
 echo "2. Testing DynamoDB service..."
-TABLES=$(aws dynamodb list-tables --endpoint-url=http://localhost:4566 --region=us-east-1 --output=text --query='TableNames[0]' 2>/dev/null)
+TABLES=$(aws dynamodb list-tables --endpoint-url=http://localhost:4566 --region=eu-west-1 --output=text --query='TableNames[0]' 2>/dev/null)
 
 if [ $? -eq 0 ]; then
     echo "✅ DynamoDB service is working"

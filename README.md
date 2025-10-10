@@ -291,7 +291,7 @@ Create a `.env` file (copy from `.env.example`):
 ```bash
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
-AWS_DEFAULT_REGION=us-east-1
+AWS_DEFAULT_REGION=eu-west-1
 DYNAMODB_ENDPOINT=http://localhost:4566
 TABLE_NAME=SingleTable
 ```

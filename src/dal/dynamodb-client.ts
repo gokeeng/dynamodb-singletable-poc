@@ -14,7 +14,7 @@ export class DynamoDBClientFactory {
   static getInstance(config?: DynamoDBConfig): DynamoDBDocumentClient {
     if (!this.instance) {
       const clientConfig: any = {
-        region: config?.region || process.env.AWS_DEFAULT_REGION || 'us-east-1'
+        region: config?.region || process.env.AWS_DEFAULT_REGION || 'eu-west-1'
       };
 
       // For LocalStack or custom endpoint

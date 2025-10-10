@@ -104,14 +104,14 @@ done
 echo "🔧 Configuring AWS CLI for LocalStack..."
 aws configure set aws_access_key_id test --profile localstack
 aws configure set aws_secret_access_key test --profile localstack
-aws configure set region us-east-1 --profile localstack
+aws configure set region eu-west-1 --profile localstack
 
 # Deploy CloudFormation stack
 echo "☁️  Deploying DynamoDB CloudFormation stack..."
 aws --endpoint-url=http://localhost:4566 --profile localstack cloudformation deploy \
     --template-file infrastructure/dynamodb-stack.yml \
     --stack-name dynamodb-singletable \
-    --region us-east-1
+    --region eu-west-1
 
 if [ $? -eq 0 ]; then
     echo "✅ CloudFormation stack deployed successfully"
