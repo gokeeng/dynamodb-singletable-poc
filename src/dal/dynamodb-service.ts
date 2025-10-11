@@ -4,7 +4,6 @@ import {
   UpdateCommand,
   DeleteCommand,
   QueryCommand,
-  ScanCommand,
   BatchWriteCommand,
   BatchGetCommand
 } from '@aws-sdk/lib-dynamodb';

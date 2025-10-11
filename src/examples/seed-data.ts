@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import { 
-  UserStatus, 
   OrderStatus,
   ProductStatus,
   ProductEntity
@@ -33,12 +32,6 @@ async function seedData(): Promise<void> {
           zipCode: '10001',
           country: 'USA'
         }
-      },
-      status: UserStatus.ACTIVE,
-      preferences: {
-        newsletterSubscribed: true,
-        theme: 'light',
-        language: 'en'
       }
     });
     console.log(`✅ Created user: ${user1.firstName} ${user1.lastName}`);
@@ -57,12 +50,6 @@ async function seedData(): Promise<void> {
           zipCode: '90210',
           country: 'USA'
         }
-      },
-      status: UserStatus.ACTIVE,
-      preferences: {
-        newsletterSubscribed: false,
-        theme: 'dark',
-        language: 'en'
       }
     });
     console.log(`✅ Created user: ${user2.firstName} ${user2.lastName}`);

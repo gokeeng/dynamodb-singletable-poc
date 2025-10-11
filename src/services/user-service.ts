@@ -39,20 +39,11 @@ export class UserService {
    */
   async updateUser(
     userId: string, 
-    updates: Partial<Pick<User, 'firstName' | 'lastName' | 'phone' | 'address' | 'preferences'>>
+    updates: Partial<Pick<User, 'firstName' | 'lastName' | 'phone' | 'address'>>
   ): Promise<User> {
     const pk = KeyBuilder.userPK(userId);
     const sk = KeyBuilder.userSK();
     return await this.dynamoService.updateItem<User>(pk, sk, updates);
-  }
-
-  /**
-   * Update user status
-   */
-  async updateUserStatus(userId: string, status: UserStatus): Promise<User> {
-    const pk = KeyBuilder.userPK(userId);
-    const sk = KeyBuilder.userSK();
-    return await this.dynamoService.updateItem<User>(pk, sk, { status: status });
   }
 
   /**

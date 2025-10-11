@@ -1,5 +1,5 @@
 import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
-import { Addresses, UserStatus, UserPreferences } from './common';
+import { Addresses } from './common';
 
 export interface User extends BaseEntity {
   entityType: typeof EntityTypes.USER;
@@ -9,9 +9,6 @@ export interface User extends BaseEntity {
   lastName: string;
   phone: string;
   address: Addresses;
-  organizationId?: string;
-  status: UserStatus;
-  preferences?: UserPreferences;
 }
 
 export class UserEntity {
