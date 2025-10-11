@@ -27,8 +27,8 @@ export class UserService {
   async getUserByEmail(email: string): Promise<User | null> {
     const gsi1Keys = KeyBuilder.userByEmailGSI1(email);
     const result = await this.dynamoService.queryGSI1<User>(
-      gsi1Keys.GSI1PK,
-      gsi1Keys.GSI1SK
+      gsi1Keys.gsi1pk,
+      gsi1Keys.gsi1sk
     );
     
     return result.items.length > 0 ? result.items[0]! : null;
@@ -39,7 +39,7 @@ export class UserService {
    */
   async updateUser(
     userId: string, 
-    updates: Partial<Pick<User, 'FirstName' | 'LastName' | 'Phone' | 'Address' | 'Preferences'>>
+    updates: Partial<Pick<User, 'firstName' | 'lastName' | 'phone' | 'address' | 'preferences'>>
   ): Promise<User> {
     const pk = KeyBuilder.userPK(userId);
     const sk = KeyBuilder.userSK();
@@ -52,7 +52,7 @@ export class UserService {
   async updateUserStatus(userId: string, status: UserStatus): Promise<User> {
     const pk = KeyBuilder.userPK(userId);
     const sk = KeyBuilder.userSK();
-    return await this.dynamoService.updateItem<User>(pk, sk, { Status: status });
+    return await this.dynamoService.updateItem<User>(pk, sk, { status: status });
   }
 
   /**
@@ -62,16 +62,6 @@ export class UserService {
     const pk = KeyBuilder.userPK(userId);
     const sk = KeyBuilder.userSK();
     await this.dynamoService.deleteItem(pk, sk);
-  }
-
-  /**
-   * Get users by organization using GSI2
-   */
-  async getUsersByOrganization(organizationId: string): Promise<User[]> {
-    const orgPK = KeyBuilder.organizationPK(organizationId);
-    const result = await this.dynamoService.queryGSI2<User>(orgPK);
-    
-    return result.items;
   }
 
   /**

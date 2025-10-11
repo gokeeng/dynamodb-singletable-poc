@@ -3,8 +3,7 @@ import {
   UserStatus, 
   OrderStatus,
   ProductStatus,
-  ProductEntity,
-  ReviewEntity
+  ProductEntity
 } from '../models';
 import { DynamoDBService } from '../dal';
 import { OrderService, UserService } from '../services';
@@ -21,208 +20,176 @@ async function seedData(): Promise<void> {
     console.log('👥 Creating users...');
     
     const user1 = await userService.createUser({
-      UserId: uuidv4(),
-      Email: 'john.doe@example.com',
-      FirstName: 'John',
-      LastName: 'Doe',
-      DateOfBirth: '1990-01-15',
-      Phone: '+1-555-0101',
-      Address: {
-        Street: '123 Main St',
-        City: 'New York',
-        State: 'NY',
-        ZipCode: '10001',
-        Country: 'USA'
+      userId: uuidv4(),
+      email: 'john.doe@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      phone: '+1-555-0101',
+      address: {
+        home: {
+          street: '123 Main St',
+          city: 'New York',
+          state: 'NY',
+          zipCode: '10001',
+          country: 'USA'
+        }
       },
-      Status: UserStatus.ACTIVE,
-      Preferences: {
-        NewsletterSubscribed: true,
-        Theme: 'light',
-        Language: 'en'
+      status: UserStatus.ACTIVE,
+      preferences: {
+        newsletterSubscribed: true,
+        theme: 'light',
+        language: 'en'
       }
     });
-    console.log(`✅ Created user: ${user1.FirstName} ${user1.LastName}`);
+    console.log(`✅ Created user: ${user1.firstName} ${user1.lastName}`);
 
     const user2 = await userService.createUser({
-      UserId: uuidv4(),
-      Email: 'jane.smith@example.com',
-      FirstName: 'Jane',
-      LastName: 'Smith',
-      DateOfBirth: '1985-06-20',
-      Phone: '+1-555-0102',
-      Address: {
-        Street: '456 Oak Ave',
-        City: 'Los Angeles',
-        State: 'CA',
-        ZipCode: '90210',
-        Country: 'USA'
+      userId: uuidv4(),
+      email: 'jane.smith@example.com',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      phone: '+1-555-0102',
+      address: {
+        home: {
+          street: '456 Oak Ave',
+          city: 'Los Angeles',
+          state: 'CA',
+          zipCode: '90210',
+          country: 'USA'
+        }
       },
-      Status: UserStatus.ACTIVE,
-      Preferences: {
-        NewsletterSubscribed: false,
-        Theme: 'dark',
-        Language: 'en'
+      status: UserStatus.ACTIVE,
+      preferences: {
+        newsletterSubscribed: false,
+        theme: 'dark',
+        language: 'en'
       }
     });
-    console.log(`✅ Created user: ${user2.FirstName} ${user2.LastName}`);
+    console.log(`✅ Created user: ${user2.firstName} ${user2.lastName}`);
 
     // Create sample products
     console.log('📦 Creating products...');
     
     const product1 = ProductEntity.create({
-      ProductId: uuidv4(),
-      Name: 'Wireless Bluetooth Headphones',
-      Description: 'High-quality wireless headphones with noise cancellation',
-      Category: 'Electronics',
-      Brand: 'AudioTech',
-      Price: 199.99,
-      Currency: 'USD',
-      SKU: 'AT-WBH-001',
-      Stock: 50,
-      Images: ['https://example.com/headphones1.jpg'],
-      Attributes: [
-        { Name: 'Color', Value: 'Black', Type: 'COLOR' },
-        { Name: 'Battery Life', Value: '30 hours', Type: 'TEXT' },
-        { Name: 'Wireless', Value: 'true', Type: 'BOOLEAN' }
+      productId: uuidv4(),
+      name: 'Wireless Bluetooth Headphones',
+      description: 'High-quality wireless headphones with noise cancellation',
+      category: 'Electronics',
+      brand: 'AudioTech',
+      price: 199.99,
+      currency: 'USD',
+      sku: 'AT-WBH-001',
+      stock: 50,
+      images: ['https://example.com/headphones1.jpg'],
+      attributes: [
+        { name: 'Color', value: 'Black', type: 'COLOR' },
+        { name: 'Battery Life', value: '30 hours', type: 'TEXT' },
+        { name: 'Wireless', value: 'true', type: 'BOOLEAN' }
       ],
-      Status: ProductStatus.ACTIVE,
-      AverageRating: 4.5,
-      ReviewCount: 128,
-      Tags: ['wireless', 'bluetooth', 'headphones', 'noise-cancelling']
+      status: ProductStatus.ACTIVE,
+      averageRating: 4.5,
+      reviewCount: 128,
+      tags: ['wireless', 'bluetooth', 'headphones', 'noise-cancelling']
     });
     await dynamoService.putItem(product1);
-    console.log(`✅ Created product: ${product1.Name}`);
+    console.log(`✅ Created product: ${product1.name}`);
 
     const product2 = ProductEntity.create({
-      ProductId: uuidv4(),
-      Name: 'Organic Cotton T-Shirt',
-      Description: 'Comfortable organic cotton t-shirt in various colors',
-      Category: 'Clothing',
-      Brand: 'EcoWear',
-      Price: 29.99,
-      Currency: 'USD',
-      SKU: 'EW-OCT-001',
-      Stock: 100,
-      Images: ['https://example.com/tshirt1.jpg'],
-      Attributes: [
-        { Name: 'Material', Value: 'Organic Cotton', Type: 'TEXT' },
-        { Name: 'Size', Value: 'Medium', Type: 'SIZE' },
-        { Name: 'Color', Value: 'Blue', Type: 'COLOR' }
+      productId: uuidv4(),
+      name: 'Organic Cotton T-Shirt',
+      description: 'Comfortable organic cotton t-shirt in various colors',
+      category: 'Clothing',
+      brand: 'EcoWear',
+      price: 29.99,
+      currency: 'USD',
+      sku: 'EW-OCT-001',
+      stock: 100,
+      images: ['https://example.com/tshirt1.jpg'],
+      attributes: [
+        { name: 'Material', value: 'Organic Cotton', type: 'TEXT' },
+        { name: 'Size', value: 'Medium', type: 'SIZE' },
+        { name: 'Color', value: 'Blue', type: 'COLOR' }
       ],
-      Status: ProductStatus.ACTIVE,
-      AverageRating: 4.2,
-      ReviewCount: 64,
-      Tags: ['organic', 'cotton', 'clothing', 'eco-friendly']
+      status: ProductStatus.ACTIVE,
+      averageRating: 4.2,
+      reviewCount: 64,
+      tags: ['organic', 'cotton', 'clothing', 'eco-friendly']
     });
     await dynamoService.putItem(product2);
-    console.log(`✅ Created product: ${product2.Name}`);
+    console.log(`✅ Created product: ${product2.name}`);
 
     // Create sample orders
     console.log('🛒 Creating orders...');
     
     const order1 = await orderService.createOrder({
-      OrderId: uuidv4(),
-      UserId: user1.UserId,
-      Status: OrderStatus.DELIVERED,
-      TotalAmount: 229.98,
-      Currency: 'USD',
-      Items: [
+      orderId: uuidv4(),
+      userId: user1.userId,
+      status: OrderStatus.DELIVERED,
+      totalAmount: 229.98,
+      currency: 'USD',
+      items: [
         {
-          ProductId: product1.ProductId,
-          ProductName: product1.Name,
-          Quantity: 1,
-          UnitPrice: 199.99,
-          TotalPrice: 199.99
+          productId: product1.productId,
+          productName: product1.name,
+          quantity: 1,
+          unitPrice: 199.99,
+          totalPrice: 199.99
         },
         {
-          ProductId: product2.ProductId,
-          ProductName: product2.Name,
-          Quantity: 1,
-          UnitPrice: 29.99,
-          TotalPrice: 29.99
+          productId: product2.productId,
+          productName: product2.name,
+          quantity: 1,
+          unitPrice: 29.99,
+          totalPrice: 29.99
         }
       ],
-      ShippingAddress: {
-        FirstName: user1.FirstName,
-        LastName: user1.LastName,
-        Street: user1.Address!.Street,
-        City: user1.Address!.City,
-        State: user1.Address!.State,
-        ZipCode: user1.Address!.ZipCode,
-        Country: user1.Address!.Country
+      shippingAddress: {
+        street: user1.address.home!.street,
+        city: user1.address.home!.city,
+        state: user1.address.home!.state,
+        zipCode: user1.address.home!.zipCode,
+        country: user1.address.home!.country
       },
-      PaymentMethod: {
-        Type: 'CREDIT_CARD',
-        Last4: '1234',
-        Brand: 'Visa'
+      paymentMethod: {
+        type: 'CREDIT_CARD',
+        last4: '1234',
+        brand: 'Visa'
       },
-      OrderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-      ShippedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-      DeliveredDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      TrackingNumber: 'TRK123456789'
+      orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      shippedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+      deliveredDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+      trackingNumber: 'TRK123456789'
     });
-    console.log(`✅ Created order: ${order1.OrderId}`);
+    console.log(`✅ Created order: ${order1.orderId}`);
 
     const order2 = await orderService.createOrder({
-      OrderId: uuidv4(),
-      UserId: user2.UserId,
-      Status: OrderStatus.PROCESSING,
-      TotalAmount: 399.98,
-      Currency: 'USD',
-      Items: [
+      orderId: uuidv4(),
+      userId: user2.userId,
+      status: OrderStatus.PROCESSING,
+      totalAmount: 399.98,
+      currency: 'USD',
+      items: [
         {
-          ProductId: product1.ProductId,
-          ProductName: product1.Name,
-          Quantity: 2,
-          UnitPrice: 199.99,
-          TotalPrice: 399.98
+          productId: product1.productId,
+          productName: product1.name,
+          quantity: 2,
+          unitPrice: 199.99,
+          totalPrice: 399.98
         }
       ],
-      ShippingAddress: {
-        FirstName: user2.FirstName,
-        LastName: user2.LastName,
-        Street: user2.Address!.Street,
-        City: user2.Address!.City,
-        State: user2.Address!.State,
-        ZipCode: user2.Address!.ZipCode,
-        Country: user2.Address!.Country
+      shippingAddress: {
+        street: user2.address.home!.street,
+        city: user2.address.home!.city,
+        state: user2.address.home!.state,
+        zipCode: user2.address.home!.zipCode,
+        country: user2.address.home!.country
       },
-      PaymentMethod: {
-        Type: 'PAYPAL'
+      paymentMethod: {
+        type: 'PAYPAL'
       },
-      OrderDate: new Date().toISOString()
+      orderDate: new Date().toISOString()
     });
-    console.log(`✅ Created order: ${order2.OrderId}`);
-
-    // Create sample reviews
-    console.log('⭐ Creating reviews...');
-    
-    const review1 = ReviewEntity.create({
-      ReviewId: uuidv4(),
-      ProductId: product1.ProductId,
-      UserId: user1.UserId,
-      Rating: 5,
-      Title: 'Excellent sound quality!',
-      Content: 'These headphones are amazing. The sound quality is crystal clear and the noise cancellation works perfectly. Highly recommended!',
-      Verified: true,
-      HelpfulCount: 12,
-      Images: ['https://example.com/review1.jpg']
-    });
-    await dynamoService.putItem(review1);
-    console.log(`✅ Created review: ${review1.Title}`);
-
-    const review2 = ReviewEntity.create({
-      ReviewId: uuidv4(),
-      ProductId: product2.ProductId,
-      UserId: user2.UserId,
-      Rating: 4,
-      Title: 'Comfortable and eco-friendly',
-      Content: 'Great quality t-shirt. The organic cotton feels really soft and comfortable. Good value for money.',
-      Verified: true,
-      HelpfulCount: 8
-    });
-    await dynamoService.putItem(review2);
-    console.log(`✅ Created review: ${review2.Title}`);
+    console.log(`✅ Created order: ${order2.orderId}`);
 
     console.log('🎉 Data seeding completed successfully!');
     console.log(`
@@ -230,7 +197,6 @@ async function seedData(): Promise<void> {
 - Users created: 2
 - Products created: 2  
 - Orders created: 2
-- Reviews created: 2
 
 🚀 You can now run the query examples to see the data in action!
     `);

@@ -1,43 +1,34 @@
 import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
+import { Address } from './common';
 
 export interface Order extends BaseEntity {
-  EntityType: typeof EntityTypes.ORDER;
-  OrderId: string;
-  UserId: string;
-  Status: OrderStatus;
-  TotalAmount: number;
-  Currency: string;
-  Items: OrderItem[];
-  ShippingAddress: ShippingAddress;
-  PaymentMethod: PaymentMethod;
-  OrderDate: string;
-  ShippedDate?: string;
-  DeliveredDate?: string;
-  TrackingNumber?: string;
+  entityType: typeof EntityTypes.ORDER;
+  orderId: string;
+  userId: string;
+  status: OrderStatus;
+  totalAmount: number;
+  currency: string;
+  items: OrderItem[];
+  shippingAddress: Address;
+  paymentMethod: PaymentMethod;
+  orderDate: string;
+  shippedDate?: string;
+  deliveredDate?: string;
+  trackingNumber?: string;
 }
 
 export interface OrderItem {
-  ProductId: string;
-  ProductName: string;
-  Quantity: number;
-  UnitPrice: number;
-  TotalPrice: number;
-}
-
-export interface ShippingAddress {
-  FirstName: string;
-  LastName: string;
-  Street: string;
-  City: string;
-  State: string;
-  ZipCode: string;
-  Country: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 export interface PaymentMethod {
-  Type: 'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'APPLE_PAY';
-  Last4?: string;
-  Brand?: string;
+  type: 'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'APPLE_PAY';
+  last4?: string;
+  brand?: string;
 }
 
 export enum OrderStatus {
@@ -55,16 +46,16 @@ export class OrderEntity {
     const now = new Date().toISOString();
     const order: Order = {
       ...data,
-      PK: KeyBuilder.orderPK(data.OrderId),
-      SK: KeyBuilder.orderSK(),
-      EntityType: EntityTypes.ORDER,
-      CreatedAt: now,
-      UpdatedAt: now,
+      pk: KeyBuilder.orderPK(data.orderId),
+      sk: KeyBuilder.orderSK(),
+      entityType: EntityTypes.ORDER,
+      createdAt: now,
+      updatedAt: now,
       // GSI1: Orders by User (for user's order history)
-      ...KeyBuilder.ordersByUserGSI1(data.UserId),
+      ...KeyBuilder.ordersByUserGSI1(data.userId),
       // GSI2: Orders by Status and Date (for admin queries)
-      GSI2PK: `${EntityTypes.ORDER}#STATUS#${data.Status}`,
-      GSI2SK: data.OrderDate
+      gsi2pk: `${EntityTypes.ORDER}#STATUS#${data.status}`,
+      gsi2sk: data.orderDate
     };
 
     return order;
@@ -73,30 +64,30 @@ export class OrderEntity {
   static updateStatus(order: Order, newStatus: OrderStatus): Order {
     const updatedOrder = {
       ...order,
-      Status: newStatus,
-      UpdatedAt: new Date().toISOString(),
-      GSI2PK: `${EntityTypes.ORDER}#STATUS#${newStatus}`
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+      gsi2pk: `${EntityTypes.ORDER}#STATUS#${newStatus}`
     };
 
     // Update shipped/delivered dates based on status
-    if (newStatus === OrderStatus.SHIPPED && !order.ShippedDate) {
-      updatedOrder.ShippedDate = new Date().toISOString();
-    } else if (newStatus === OrderStatus.DELIVERED && !order.DeliveredDate) {
-      updatedOrder.DeliveredDate = new Date().toISOString();
+    if (newStatus === OrderStatus.SHIPPED && !order.shippedDate) {
+      updatedOrder.shippedDate = new Date().toISOString();
+    } else if (newStatus === OrderStatus.DELIVERED && !order.deliveredDate) {
+      updatedOrder.deliveredDate = new Date().toISOString();
     }
 
     return updatedOrder;
   }
 
   static calculateTotal(order: Order): number {
-    return order.Items.reduce((total, item) => total + item.TotalPrice, 0);
+    return order.items.reduce((total: number, item: OrderItem) => total + item.totalPrice, 0);
   }
 
   static addTrackingNumber(order: Order, trackingNumber: string): Order {
     return {
       ...order,
-      TrackingNumber: trackingNumber,
-      UpdatedAt: new Date().toISOString()
+      trackingNumber: trackingNumber,
+      updatedAt: new Date().toISOString()
     };
   }
 }

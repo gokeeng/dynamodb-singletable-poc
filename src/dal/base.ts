@@ -2,15 +2,15 @@
  * Base interface for all entities in the single table design
  */
 export interface BaseEntity {
-  PK: string;           // Partition Key
-  SK: string;           // Sort Key
-  GSI1PK?: string;      // Global Secondary Index 1 Partition Key
-  GSI1SK?: string;      // Global Secondary Index 1 Sort Key
-  GSI2PK?: string;      // Global Secondary Index 2 Partition Key
-  GSI2SK?: string;      // Global Secondary Index 2 Sort Key
-  EntityType: string;   // Type of entity (USER, ORDER, PRODUCT, etc.)
-  CreatedAt: string;    // ISO timestamp
-  UpdatedAt: string;    // ISO timestamp
+  pk: string;           // Partition Key
+  sk: string;           // Sort Key
+  gsi1pk?: string;      // Global Secondary Index 1 Partition Key
+  gsi1sk?: string;      // Global Secondary Index 1 Sort Key
+  gsi2pk?: string;      // Global Secondary Index 2 Partition Key
+  gsi2sk?: string;      // Global Secondary Index 2 Sort Key
+  entityType: string;   // Type of entity (USER, ORDER, PRODUCT, etc.)
+  createdAt: string;    // ISO timestamp
+  updatedAt: string;    // ISO timestamp
 }
 
 /**
@@ -20,8 +20,7 @@ export const EntityTypes = {
   USER: 'USER',
   ORDER: 'ORDER', 
   PRODUCT: 'PRODUCT',
-  REVIEW: 'REVIEW',
-  ORGANIZATION: 'ORG'
+  REVIEW: 'REVIEW'
 } as const;
 
 export type EntityType = typeof EntityTypes[keyof typeof EntityTypes];
@@ -54,41 +53,18 @@ export class KeyBuilder {
     return `${EntityTypes.PRODUCT}#DETAILS`;
   }
 
-  static reviewPK(reviewId: string): string {
-    return `${EntityTypes.REVIEW}#${reviewId}`;
-  }
-
-  static reviewSK(): string {
-    return `${EntityTypes.REVIEW}#DETAILS`;
-  }
-
-  static organizationPK(orgId: string): string {
-    return `${EntityTypes.ORGANIZATION}#${orgId}`;
-  }
-
-  static organizationSK(): string {
-    return `${EntityTypes.ORGANIZATION}#DETAILS`;
-  }
-
   // GSI helpers for common access patterns
-  static userByEmailGSI1(email: string): { GSI1PK: string; GSI1SK: string } {
+  static userByEmailGSI1(email: string): { gsi1pk: string; gsi1sk: string } {
     return {
-      GSI1PK: `${EntityTypes.USER}#EMAIL`,
-      GSI1SK: email
+      gsi1pk: `${EntityTypes.USER}#EMAIL`,
+      gsi1sk: email
     };
   }
 
-  static ordersByUserGSI1(userId: string): { GSI1PK: string; GSI1SK: string } {
+  static ordersByUserGSI1(userId: string): { gsi1pk: string; gsi1sk: string } {
     return {
-      GSI1PK: KeyBuilder.userPK(userId),
-      GSI1SK: `${EntityTypes.ORDER}#`
-    };
-  }
-
-  static reviewsByProductGSI2(productId: string): { GSI2PK: string; GSI2SK: string } {
-    return {
-      GSI2PK: KeyBuilder.productPK(productId),
-      GSI2SK: `${EntityTypes.REVIEW}#`
+      gsi1pk: KeyBuilder.userPK(userId),
+      gsi1sk: `${EntityTypes.ORDER}#`
     };
   }
 }

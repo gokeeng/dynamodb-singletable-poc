@@ -4,7 +4,7 @@ Description: 'DynamoDB Single Table Design for Multi-Entity Storage'
 Parameters:
   TableName:
     Type: String
-    Default: SingleTable
+    Default: Bookstore
     Description: Name of the DynamoDB table
   
   Environment:
@@ -15,7 +15,7 @@ Parameters:
 
 Resources:
   # Main DynamoDB Table with Single Table Design
-  SingleTable:
+  BookstoreTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Ref TableName
@@ -25,32 +25,32 @@ Resources:
       # PK = Partition Key (Entity Type + ID)
       # SK = Sort Key (Entity Type + Additional Info)
       AttributeDefinitions:
-        - AttributeName: PK
+        - AttributeName: pk
           AttributeType: S
-        - AttributeName: SK
+        - AttributeName: sk
           AttributeType: S
-        - AttributeName: GSI1PK
+        - AttributeName: gsi1pk
           AttributeType: S
-        - AttributeName: GSI1SK
+        - AttributeName: gsi1sk
           AttributeType: S
-        - AttributeName: GSI2PK
+        - AttributeName: gsi2pk
           AttributeType: S
-        - AttributeName: GSI2SK
+        - AttributeName: gsi2sk
           AttributeType: S
       
       KeySchema:
-        - AttributeName: PK
+        - AttributeName: pk
           KeyType: HASH
-        - AttributeName: SK
+        - AttributeName: sk
           KeyType: RANGE
       
       # Global Secondary Index 1 - For inverse lookups
       GlobalSecondaryIndexes:
         - IndexName: GSI1
           KeySchema:
-            - AttributeName: GSI1PK
+            - AttributeName: gsi1pk
               KeyType: HASH
-            - AttributeName: GSI1SK
+            - AttributeName: gsi1sk
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -58,9 +58,9 @@ Resources:
         # Global Secondary Index 2 - For additional access patterns
         - IndexName: GSI2
           KeySchema:
-            - AttributeName: GSI2PK
+            - AttributeName: gsi2pk
               KeyType: HASH
-            - AttributeName: GSI2SK
+            - AttributeName: gsi2sk
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -88,18 +88,18 @@ Resources:
 Outputs:
   TableName:
     Description: Name of the DynamoDB table
-    Value: !Ref SingleTable
+    Value: !Ref BookstoreTable
     Export:
       Name: !Sub '${AWS::StackName}-TableName'
   
   TableArn:
     Description: ARN of the DynamoDB table
-    Value: !GetAtt SingleTable.Arn
+    Value: !GetAtt BookstoreTable.Arn
     Export:
       Name: !Sub '${AWS::StackName}-TableArn'
   
   StreamArn:
     Description: ARN of the DynamoDB stream
-    Value: !GetAtt SingleTable.StreamArn
+    Value: !GetAtt BookstoreTable.StreamArn
     Export:
       Name: !Sub '${AWS::StackName}-StreamArn'

@@ -16,8 +16,8 @@ async function demonstrateQueries(): Promise<void> {
     console.log('   Pattern: GSI1 query (USER#EMAIL -> email)');
     const userByEmail = await userService.getUserByEmail('john.doe@example.com');
     if (userByEmail) {
-      console.log(`   ✅ Found user: ${userByEmail.FirstName} ${userByEmail.LastName}`);
-      console.log(`   📧 Email: ${userByEmail.Email}`);
+      console.log(`   ✅ Found user: ${userByEmail.firstName} ${userByEmail.lastName}`);
+      console.log(`   📧 Email: ${userByEmail.email}`);
     } else {
       console.log('   ❌ User not found');
     }
@@ -27,10 +27,10 @@ async function demonstrateQueries(): Promise<void> {
     console.log('2️⃣ Query: Get user\'s order history');
     console.log('   Pattern: GSI1 query (USER#userId -> ORDER#)');
     if (userByEmail) {
-      const userOrders = await orderService.getOrdersByUser(userByEmail.UserId);
-      console.log(`   ✅ Found ${userOrders.length} orders for ${userByEmail.FirstName}`);
+      const userOrders = await orderService.getOrdersByUser(userByEmail.userId);
+      console.log(`   ✅ Found ${userOrders.length} orders for ${userByEmail.firstName}`);
       userOrders.forEach((order, index) => {
-        console.log(`   📦 Order ${index + 1}: ${order.OrderId} - ${order.Status} - $${order.TotalAmount}`);
+        console.log(`   📦 Order ${index + 1}: ${order.orderId} - ${order.status} - $${order.totalAmount}`);
       });
     }
     console.log();
@@ -41,7 +41,7 @@ async function demonstrateQueries(): Promise<void> {
     const processingOrders = await orderService.getOrdersByStatus(OrderStatus.PROCESSING);
     console.log(`   ✅ Found ${processingOrders.length} processing orders`);
     processingOrders.forEach((order, index) => {
-      console.log(`   🔄 Order ${index + 1}: ${order.OrderId} - $${order.TotalAmount} - ${order.OrderDate}`);
+      console.log(`   🔄 Order ${index + 1}: ${order.orderId} - $${order.totalAmount} - ${order.orderDate}`);
     });
     console.log();
 
@@ -49,8 +49,8 @@ async function demonstrateQueries(): Promise<void> {
     console.log('4️⃣ Query: User order statistics');
     console.log('   Pattern: Multiple queries aggregated');
     if (userByEmail) {
-      const stats = await orderService.getUserOrderStats(userByEmail.UserId);
-      console.log(`   📊 Statistics for ${userByEmail.FirstName}:`);
+      const stats = await orderService.getUserOrderStats(userByEmail.userId);
+      console.log(`   📊 Statistics for ${userByEmail.firstName}:`);
       console.log(`      Total Orders: ${stats.totalOrders}`);
       console.log(`      Total Spent: $${stats.totalSpent.toFixed(2)}`);
       console.log(`      Orders by Status:`);
@@ -72,7 +72,7 @@ async function demonstrateQueries(): Promise<void> {
     );
     console.log(`   ✅ Found ${allProducts.items.length} products`);
     allProducts.items.forEach((item: any, index) => {
-      console.log(`   🛍️  Product ${index + 1}: ${item.Name} - $${item.Price} (${item.Category})`);
+      console.log(`   🛍️  Product ${index + 1}: ${item.name} - $${item.price} (${item.category})`);
     });
     console.log();
 
@@ -84,7 +84,7 @@ async function demonstrateQueries(): Promise<void> {
     );
     console.log(`   ✅ Found ${electronicsProducts.items.length} electronics products`);
     electronicsProducts.items.forEach((item: any, index) => {
-      console.log(`   💻 Product ${index + 1}: ${item.Name} - ${item.Brand} - $${item.Price}`);
+      console.log(`   💻 Product ${index + 1}: ${item.name} - ${item.brand} - $${item.price}`);
     });
     console.log();
 
@@ -94,12 +94,12 @@ async function demonstrateQueries(): Promise<void> {
     if (electronicsProducts.items.length > 0) {
       const product = electronicsProducts.items[0] as any;
       const productReviews = await dynamoService.queryGSI2(
-        `PRODUCT#${product.ProductId}`,
+        `PRODUCT#${product.productId}`,
         'REVIEW#'
       );
-      console.log(`   ✅ Found ${productReviews.items.length} reviews for ${product.Name}`);
+      console.log(`   ✅ Found ${productReviews.items.length} reviews for ${product.name}`);
       productReviews.items.forEach((review: any, index) => {
-        console.log(`   ⭐ Review ${index + 1}: ${review.Rating}/5 - "${review.Title}"`);
+        console.log(`   ⭐ Review ${index + 1}: ${review.rating}/5 - "${review.title}"`);
       });
     }
     console.log();
@@ -110,7 +110,7 @@ async function demonstrateQueries(): Promise<void> {
     const recentDeliveredOrders = await orderService.getRecentOrdersByStatus(OrderStatus.DELIVERED, 30);
     console.log(`   ✅ Found ${recentDeliveredOrders.length} orders delivered in last 30 days`);
     recentDeliveredOrders.forEach((order, index) => {
-      console.log(`   📦 Order ${index + 1}: ${order.OrderId} - $${order.TotalAmount} - ${order.DeliveredDate}`);
+      console.log(`   📦 Order ${index + 1}: ${order.orderId} - $${order.totalAmount} - ${order.deliveredDate}`);
     });
 
     console.log('\n🎉 Query demonstration completed!');

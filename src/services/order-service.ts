@@ -27,8 +27,8 @@ export class OrderService {
   async getOrdersByUser(userId: string, limit?: number): Promise<Order[]> {
     const gsi1Keys = KeyBuilder.ordersByUserGSI1(userId);
     const result = await this.dynamoService.queryGSI1<Order>(
-      gsi1Keys.GSI1PK,
-      gsi1Keys.GSI1SK,
+      gsi1Keys.gsi1pk,
+      gsi1Keys.gsi1sk,
       { 
         limit,
         scanIndexForward: false // Most recent orders first
@@ -99,7 +99,7 @@ export class OrderService {
       gsi2pk,
       undefined,
       {
-        filterExpression: 'OrderDate >= :cutoffDate',
+        filterExpression: 'orderDate >= :cutoffDate',
         expressionAttributeValues: {
           ':cutoffDate': cutoffISO
         },
@@ -120,10 +120,10 @@ export class OrderService {
   ): Promise<Order[]> {
     const gsi1Keys = KeyBuilder.ordersByUserGSI1(userId);
     const result = await this.dynamoService.queryGSI1<Order>(
-      gsi1Keys.GSI1PK,
-      gsi1Keys.GSI1SK,
+      gsi1Keys.gsi1pk,
+      gsi1Keys.gsi1sk,
       {
-        filterExpression: 'OrderDate BETWEEN :startDate AND :endDate',
+        filterExpression: 'orderDate BETWEEN :startDate AND :endDate',
         expressionAttributeValues: {
           ':startDate': startDate,
           ':endDate': endDate
@@ -156,7 +156,7 @@ export class OrderService {
     
     const stats = {
       totalOrders: orders.length,
-      totalSpent: orders.reduce((total, order) => total + order.TotalAmount, 0),
+      totalSpent: orders.reduce((total, order) => total + order.totalAmount, 0),
       ordersByStatus: {} as Record<OrderStatus, number>
     };
 
@@ -167,7 +167,7 @@ export class OrderService {
 
     // Count orders by status
     orders.forEach(order => {
-      stats.ordersByStatus[order.Status]++;
+      stats.ordersByStatus[order.status]++;
     });
 
     return stats;

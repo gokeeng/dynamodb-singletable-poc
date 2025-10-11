@@ -1,28 +1,28 @@
 import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
 
 export interface Product extends BaseEntity {
-  EntityType: typeof EntityTypes.PRODUCT;
-  ProductId: string;
-  Name: string;
-  Description: string;
-  Category: string;
-  Brand: string;
-  Price: number;
-  Currency: string;
-  SKU: string;
-  Stock: number;
-  Images: string[];
-  Attributes: ProductAttribute[];
-  Status: ProductStatus;
-  AverageRating?: number;
-  ReviewCount?: number;
-  Tags: string[];
+  entityType: typeof EntityTypes.PRODUCT;
+  productId: string;
+  name: string;
+  description: string;
+  category: string;
+  brand: string;
+  price: number;
+  currency: string;
+  sku: string;
+  stock: number;
+  images: string[];
+  attributes: ProductAttribute[];
+  status: ProductStatus;
+  averageRating?: number;
+  reviewCount?: number;
+  tags: string[];
 }
 
 export interface ProductAttribute {
-  Name: string;
-  Value: string;
-  Type: 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'COLOR' | 'SIZE';
+  name: string;
+  value: string;
+  type: 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'COLOR' | 'SIZE';
 }
 
 export enum ProductStatus {
@@ -37,17 +37,17 @@ export class ProductEntity {
     const now = new Date().toISOString();
     const product: Product = {
       ...data,
-      PK: KeyBuilder.productPK(data.ProductId),
-      SK: KeyBuilder.productSK(),
-      EntityType: EntityTypes.PRODUCT,
-      CreatedAt: now,
-      UpdatedAt: now,
+      pk: KeyBuilder.productPK(data.productId),
+      sk: KeyBuilder.productSK(),
+      entityType: EntityTypes.PRODUCT,
+      createdAt: now,
+      updatedAt: now,
       // GSI1: Products by Category (for browsing)
-      GSI1PK: `${EntityTypes.PRODUCT}#CATEGORY#${data.Category}`,
-      GSI1SK: `${data.Brand}#${data.Name}`,
+      gsi1pk: `${EntityTypes.PRODUCT}#CATEGORY#${data.category}`,
+      gsi1sk: `${data.brand}#${data.name}`,
       // GSI2: Products by Brand (for brand-specific queries)
-      GSI2PK: `${EntityTypes.PRODUCT}#BRAND#${data.Brand}`,
-      GSI2SK: `${data.Category}#${data.Name}`
+      gsi2pk: `${EntityTypes.PRODUCT}#BRAND#${data.brand}`,
+      gsi2sk: `${data.category}#${data.name}`
     };
 
     return product;
@@ -56,15 +56,15 @@ export class ProductEntity {
   static updateStock(product: Product, newStock: number): Product {
     const updatedProduct = {
       ...product,
-      Stock: newStock,
-      UpdatedAt: new Date().toISOString()
+      stock: newStock,
+      updatedAt: new Date().toISOString()
     };
 
     // Update status based on stock level
-    if (newStock === 0 && product.Status === ProductStatus.ACTIVE) {
-      updatedProduct.Status = ProductStatus.OUT_OF_STOCK;
-    } else if (newStock > 0 && product.Status === ProductStatus.OUT_OF_STOCK) {
-      updatedProduct.Status = ProductStatus.ACTIVE;
+    if (newStock === 0 && product.status === ProductStatus.ACTIVE) {
+      updatedProduct.status = ProductStatus.OUT_OF_STOCK;
+    } else if (newStock > 0 && product.status === ProductStatus.OUT_OF_STOCK) {
+      updatedProduct.status = ProductStatus.ACTIVE;
     }
 
     return updatedProduct;
@@ -73,21 +73,21 @@ export class ProductEntity {
   static updateRating(product: Product, averageRating: number, reviewCount: number): Product {
     return {
       ...product,
-      AverageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
-      ReviewCount: reviewCount,
-      UpdatedAt: new Date().toISOString()
+      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+      reviewCount: reviewCount,
+      updatedAt: new Date().toISOString()
     };
   }
 
   static isInStock(product: Product): boolean {
-    return product.Stock > 0 && product.Status === ProductStatus.ACTIVE;
+    return product.stock > 0 && product.status === ProductStatus.ACTIVE;
   }
 
   static getDisplayPrice(product: Product): string {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: product.Currency
+      currency: product.currency
     });
-    return formatter.format(product.Price);
+    return formatter.format(product.price);
   }
 }

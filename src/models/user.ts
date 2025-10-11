@@ -1,37 +1,17 @@
 import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
+import { Addresses, UserStatus, UserPreferences } from './common';
 
 export interface User extends BaseEntity {
-  EntityType: typeof EntityTypes.USER;
-  UserId: string;
-  Email: string;
-  FirstName: string;
-  LastName: string;
-  DateOfBirth?: string;
-  Phone?: string;
-  Address?: Address;
-  OrganizationId?: string;
-  Status: UserStatus;
-  Preferences?: UserPreferences;
-}
-
-export interface Address {
-  Street: string;
-  City: string;
-  State: string;
-  ZipCode: string;
-  Country: string;
-}
-
-export interface UserPreferences {
-  NewsletterSubscribed: boolean;
-  Theme: 'light' | 'dark';
-  Language: string;
-}
-
-export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED'
+  entityType: typeof EntityTypes.USER;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: Addresses;
+  organizationId?: string;
+  status: UserStatus;
+  preferences?: UserPreferences;
 }
 
 export class UserEntity {
@@ -39,19 +19,13 @@ export class UserEntity {
     const now = new Date().toISOString();
     const user: User = {
       ...data,
-      PK: KeyBuilder.userPK(data.UserId),
-      SK: KeyBuilder.userSK(),
-      EntityType: EntityTypes.USER,
-      CreatedAt: now,
-      UpdatedAt: now,
-      ...KeyBuilder.userByEmailGSI1(data.Email)
+      pk: KeyBuilder.userPK(data.userId),
+      sk: KeyBuilder.userSK(),
+      entityType: EntityTypes.USER,
+      createdAt: now,
+      updatedAt: now,
+      ...KeyBuilder.userByEmailGSI1(data.email)
     };
-
-    // If user belongs to an organization, set up GSI2 for org-based queries
-    if (data.OrganizationId) {
-      user.GSI2PK = KeyBuilder.organizationPK(data.OrganizationId);
-      user.GSI2SK = KeyBuilder.userPK(data.UserId);
-    }
 
     return user;
   }
@@ -59,11 +33,11 @@ export class UserEntity {
   static updateTimestamp(user: User): User {
     return {
       ...user,
-      UpdatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
   }
 
   static getFullName(user: User): string {
-    return `${user.FirstName} ${user.LastName}`;
+    return `${user.firstName} ${user.lastName}`;
   }
 }

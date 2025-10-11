@@ -24,8 +24,8 @@ TABLES=$(aws dynamodb list-tables --endpoint-url=http://localhost:4566 --region=
 
 if [ $? -eq 0 ]; then
     echo "✅ DynamoDB service is working"
-    if [ "$TABLES" = "SingleTable" ]; then
-        echo "✅ SingleTable exists"
+    if [ "$TABLES" = "Bookstore" ]; then
+        echo "✅ Bookstore table exists"
     elif [ "$TABLES" = "None" ] || [ -z "$TABLES" ]; then
         echo "⚠️  No tables found - need to deploy CloudFormation stack"
         echo "   Run: npm run stack:deploy"

@@ -32,9 +32,9 @@ export class DynamoDBService {
   private client: DynamoDBDocumentClient;
   private tableName: string;
 
-  constructor(tableName?: string, client?: DynamoDBDocumentClient) {
+  constructor(client?: DynamoDBDocumentClient, tableName?: string) {
     this.client = client || DynamoDBClientFactory.getInstance();
-    this.tableName = tableName || process.env.TABLE_NAME || 'SingleTable';
+    this.tableName = tableName || process.env.TABLE_NAME || 'Bookstore';
   }
 
   /**
@@ -56,7 +56,7 @@ export class DynamoDBService {
   async getItem<T extends BaseEntity>(pk: string, sk: string): Promise<T | null> {
     const command = new GetCommand({
       TableName: this.tableName,
-      Key: { PK: pk, SK: sk }
+      Key: { pk: pk, sk: sk }
     });
 
     const result = await this.client.send(command);
@@ -92,7 +92,7 @@ export class DynamoDBService {
 
     const command = new UpdateCommand({
       TableName: this.tableName,
-      Key: { PK: pk, SK: sk },
+      Key: { pk: pk, sk: sk },
       UpdateExpression: `SET ${updateExpression.join(', ')}`,
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
@@ -109,7 +109,7 @@ export class DynamoDBService {
   async deleteItem(pk: string, sk: string): Promise<void> {
     const command = new DeleteCommand({
       TableName: this.tableName,
-      Key: { PK: pk, SK: sk }
+      Key: { pk: pk, sk: sk }
     });
 
     await this.client.send(command);
@@ -124,7 +124,7 @@ export class DynamoDBService {
   ): Promise<QueryResult<T>> {
     const command = new QueryCommand({
       TableName: this.tableName,
-      KeyConditionExpression: 'PK = :pk',
+      KeyConditionExpression: 'pk = :pk',
       ExpressionAttributeValues: {
         ':pk': pk,
         ...options.expressionAttributeValues
@@ -157,7 +157,7 @@ export class DynamoDBService {
   ): Promise<QueryResult<T>> {
     const command = new QueryCommand({
       TableName: this.tableName,
-      KeyConditionExpression: `PK = :pk AND ${skCondition}`,
+      KeyConditionExpression: `pk = :pk AND ${skCondition}`,
       ExpressionAttributeValues: {
         ':pk': pk,
         ':sk': skValue,
@@ -188,14 +188,14 @@ export class DynamoDBService {
     gsi1sk?: string,
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
-    let keyConditionExpression = 'GSI1PK = :gsi1pk';
+    let keyConditionExpression = 'gsi1pk = :gsi1pk';
     const expressionAttributeValues: Record<string, any> = {
       ':gsi1pk': gsi1pk,
       ...options.expressionAttributeValues
     };
 
     if (gsi1sk) {
-      keyConditionExpression += ' AND begins_with(GSI1SK, :gsi1sk)';
+      keyConditionExpression += ' AND begins_with(gsi1sk, :gsi1sk)';
       expressionAttributeValues[':gsi1sk'] = gsi1sk;
     }
 
@@ -229,14 +229,14 @@ export class DynamoDBService {
     gsi2sk?: string,
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
-    let keyConditionExpression = 'GSI2PK = :gsi2pk';
+    let keyConditionExpression = 'gsi2pk = :gsi2pk';
     const expressionAttributeValues: Record<string, any> = {
       ':gsi2pk': gsi2pk,
       ...options.expressionAttributeValues
     };
 
     if (gsi2sk) {
-      keyConditionExpression += ' AND begins_with(GSI2SK, :gsi2sk)';
+      keyConditionExpression += ' AND begins_with(gsi2sk, :gsi2sk)';
       expressionAttributeValues[':gsi2sk'] = gsi2sk;
     }
 
