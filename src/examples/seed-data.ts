@@ -1,11 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import { 
-  OrderStatus,
-  ProductStatus,
-  ProductEntity
-} from '../models';
-import { DynamoDBService } from '../dal';
-import { OrderService, UserService } from '../services';
+import { OrderStatus } from '../models/order';
+import { ProductStatus, ProductEntity } from '../models/product';
+import { DynamoDBService } from '../dal/dynamodb-service';
+import { OrderService } from '../services/order-service';
+import { UserService } from '../services/user-service';
 
 async function seedData(): Promise<void> {
   console.log('🌱 Starting data seeding...');

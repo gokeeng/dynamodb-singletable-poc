@@ -1,5 +1,6 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
-import { Order, OrderEntity, OrderStatus, KeyBuilder } from '../models';
+import { Order, OrderEntity, OrderStatus } from '../models/order';
+import { BaseEntity, KeyBuilder } from '../dal/base';
 
 export class OrderService {
   constructor(private dynamoService: DynamoDBService) {}
@@ -7,7 +8,7 @@ export class OrderService {
   /**
    * Create a new order
    */
-  async createOrder(orderData: Omit<Order, keyof import('../models').BaseEntity>): Promise<Order> {
+  async createOrder(orderData: Omit<Order, keyof BaseEntity>): Promise<Order> {
     const order = OrderEntity.create(orderData);
     return await this.dynamoService.putItem(order);
   }

@@ -9,7 +9,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClientFactory } from './dynamodb-client';
-import { BaseEntity } from '../models';
+import { BaseEntity } from './base';
 
 export interface QueryOptions {
   limit?: number;

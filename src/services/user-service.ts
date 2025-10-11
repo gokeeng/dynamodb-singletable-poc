@@ -1,5 +1,7 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
-import { User, UserEntity, UserStatus, KeyBuilder } from '../models';
+import { User, UserEntity } from '../models/user';
+import { UserStatus } from '../models/common';
+import { BaseEntity, KeyBuilder } from '../dal/base';
 
 export class UserService {
   constructor(private dynamoService: DynamoDBService) {}
@@ -7,7 +9,7 @@ export class UserService {
   /**
    * Create a new user
    */
-  async createUser(userData: Omit<User, keyof import('../models').BaseEntity>): Promise<User> {
+  async createUser(userData: Omit<User, keyof BaseEntity>): Promise<User> {
     const user = UserEntity.create(userData);
     return await this.dynamoService.putItem(user);
   }

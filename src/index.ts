@@ -1,5 +1,4 @@
-import { DynamoDBService } from "./dal";
-
+import { DynamoDBService } from "./dal/dynamodb-service";
 
 /**
  * Main entry point that demonstrates the single table design

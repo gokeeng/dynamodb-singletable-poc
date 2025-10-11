@@ -1,7 +1,8 @@
 
-import { DynamoDBService } from '../dal';
-import { OrderStatus } from '../models';
-import { OrderService, UserService } from '../services';
+import { DynamoDBService } from '../dal/dynamodb-service';
+import { OrderStatus } from '../models/order';
+import { OrderService } from '../services/order-service';
+import { UserService } from '../services/user-service';
 
 async function demonstrateQueries(): Promise<void> {
   console.log('🔍 Demonstrating DynamoDB Single Table Query Patterns...\n');
