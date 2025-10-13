@@ -100,15 +100,22 @@ while [ $attempt -le $max_attempts ]; do
     fi
 done
 
-# Configure AWS CLI for LocalStack
-echo "🔧 Configuring AWS CLI for LocalStack..."
-aws configure set aws_access_key_id test --profile localstack
-aws configure set aws_secret_access_key test --profile localstack
-aws configure set region eu-west-1 --profile localstack
+# Set AWS credentials for LocalStack (export for this session)
+echo "🔧 Setting AWS credentials for LocalStack..."
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=eu-west-1
 
-# Deploy CloudFormation stack
+# Configure AWS CLI for LocalStack (for future use)
+echo "🔧 Configuring AWS CLI profile for LocalStack..."
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws configure set aws_access_key_id test --profile localstack
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws configure set aws_secret_access_key test --profile localstack
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws configure set region eu-west-1 --profile localstack
+
+# Deploy CloudFormation stack with timeout
 echo "☁️  Deploying DynamoDB CloudFormation stack..."
-aws --endpoint-url=http://localhost:4566 --profile localstack cloudformation deploy \
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=eu-west-1 \
+aws --endpoint-url=http://localhost:4566 cloudformation deploy \
     --template-file infrastructure/dynamodb-stack.yml \
     --stack-name dynamodb-singletable \
     --region eu-west-1
@@ -116,8 +123,35 @@ aws --endpoint-url=http://localhost:4566 --profile localstack cloudformation dep
 if [ $? -eq 0 ]; then
     echo "✅ CloudFormation stack deployed successfully"
 else
-    echo "❌ Failed to deploy CloudFormation stack"
-    exit 1
+    echo "⚠️  CloudFormation deployment failed, trying direct table creation..."
+    
+    # Fallback: Create table directly with proper attributes and indexes
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=eu-west-1 \
+    aws --endpoint-url=http://localhost:4566 dynamodb create-table \
+        --table-name Bookstore \
+        --attribute-definitions \
+            AttributeName=pk,AttributeType=S \
+            AttributeName=sk,AttributeType=S \
+            AttributeName=gsi1pk,AttributeType=S \
+            AttributeName=gsi1sk,AttributeType=S \
+            AttributeName=gsi2pk,AttributeType=S \
+            AttributeName=gsi2sk,AttributeType=S \
+        --key-schema \
+            AttributeName=pk,KeyType=HASH \
+            AttributeName=sk,KeyType=RANGE \
+        --global-secondary-indexes \
+            'IndexName=GSI1,KeySchema=[{AttributeName=gsi1pk,KeyType=HASH},{AttributeName=gsi1sk,KeyType=RANGE}],Projection={ProjectionType=ALL},BillingMode=PAY_PER_REQUEST' \
+            'IndexName=GSI2,KeySchema=[{AttributeName=gsi2pk,KeyType=HASH},{AttributeName=gsi2sk,KeyType=RANGE}],Projection={ProjectionType=ALL},BillingMode=PAY_PER_REQUEST' \
+        --billing-mode PAY_PER_REQUEST \
+        --region eu-west-1
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ DynamoDB table created successfully via direct API"
+    else
+        echo "❌ Failed to create DynamoDB table"
+        echo "📋 Debug: Check LocalStack logs with 'docker-compose logs localstack'"
+        exit 1
+    fi
 fi
 
 # Build TypeScript
@@ -140,7 +174,10 @@ echo "  2. Run query examples: npm run demo:query"
 echo "  3. Start development: npm run dev"
 echo ""
 echo "🛠️  Useful commands:"
-echo "  • View LocalStack logs: docker-compose logs -f"
+echo "  • View LocalStack logs: docker-compose logs -f localstack"
 echo "  • Stop LocalStack: docker-compose down"
 echo "  • Rebuild: npm run clean && npm run build"
+echo "  • Check table: aws --endpoint-url=http://localhost:4566 dynamodb list-tables --region eu-west-1"
+echo ""
+echo "💡 Note: AWS credentials are set to 'test' for LocalStack development"
 echo ""

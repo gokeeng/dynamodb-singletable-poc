@@ -17,7 +17,7 @@ export class UserEntity {
     const user: User = {
       ...data,
       pk: KeyBuilder.userPK(data.userId),
-      sk: KeyBuilder.userSK(),
+      sk: KeyBuilder.userSK(data.userId),
       entityType: EntityTypes.USER,
       createdAt: now,
       updatedAt: now,

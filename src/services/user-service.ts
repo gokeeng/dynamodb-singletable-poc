@@ -19,7 +19,7 @@ export class UserService {
    */
   async getUserById(userId: string): Promise<User | null> {
     const pk = KeyBuilder.userPK(userId);
-    const sk = KeyBuilder.userSK();
+    const sk = KeyBuilder.userSK(userId);
     return await this.dynamoService.getItem<User>(pk, sk);
   }
 
@@ -44,7 +44,7 @@ export class UserService {
     updates: Partial<Pick<User, 'firstName' | 'lastName' | 'phone' | 'address'>>
   ): Promise<User> {
     const pk = KeyBuilder.userPK(userId);
-    const sk = KeyBuilder.userSK();
+    const sk = KeyBuilder.userSK(userId);
     return await this.dynamoService.updateItem<User>(pk, sk, updates);
   }
 
@@ -53,7 +53,7 @@ export class UserService {
    */
   async deleteUser(userId: string): Promise<void> {
     const pk = KeyBuilder.userPK(userId);
-    const sk = KeyBuilder.userSK();
+    const sk = KeyBuilder.userSK(userId);
     await this.dynamoService.deleteItem(pk, sk);
   }
 

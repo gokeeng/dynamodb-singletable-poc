@@ -10,7 +10,6 @@
     "clean": "rm -rf dist",
     "localstack:start": "docker-compose up -d",
     "localstack:stop": "docker-compose down",
-
     "localstack:logs": "docker-compose logs -f localstack",
     "stack:deploy": "aws --endpoint-url=http://localhost:4566 cloudformation deploy --template-file infrastructure/dynamodb-stack.yml --stack-name dynamodb-singletable --region eu-west-1",
     "stack:delete": "aws --endpoint-url=http://localhost:4566 cloudformation delete-stack --stack-name dynamodb-singletable --region eu-west-1",
@@ -21,8 +20,9 @@
     "demo:query": "./scripts/with-env.sh ts-node src/examples/query-examples.ts",
     "demo:all": "npm run demo:seed && npm run demo:query",
     "test-setup": "./scripts/test-setup.sh",
-    "git:add-all": "git add .",
+    "with-env": "./scripts/with-env.sh --",
     "test": "jest",
+    "test:integration": "./scripts/with-env.sh npx jest --testPathPattern 'test/integration/.*\\.int\\.test\\.ts$' --detectOpenHandles",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix"
   },
@@ -37,18 +37,22 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.8.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.21",
+    "@types/node-fetch": "^2.6.13",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
     "eslint": "^8.51.0",
     "jest": "^29.7.0",
+    "node-fetch": "^2.7.0",
+    "ts-jest": "^29.4.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.423.0",
     "@aws-sdk/lib-dynamodb": "^3.423.0",
-    "uuid": "^9.0.1",
-    "@types/uuid": "^9.0.5"
+    "@types/uuid": "^9.0.5",
+    "uuid": "^9.0.1"
   }
 }

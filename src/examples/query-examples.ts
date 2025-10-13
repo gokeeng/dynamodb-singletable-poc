@@ -1,4 +1,3 @@
-
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { OrderStatus } from '../models/order';
 import { OrderService } from '../services/order-service';
@@ -89,24 +88,8 @@ async function demonstrateQueries(): Promise<void> {
     });
     console.log();
 
-    // 7. Demonstrate reviews by product (GSI2)
-    console.log('7️⃣ Query: Reviews for a product');
-    console.log('   Pattern: GSI2 query (PRODUCT#productId -> REVIEW#)');
-    if (electronicsProducts.items.length > 0) {
-      const product = electronicsProducts.items[0] as any;
-      const productReviews = await dynamoService.queryGSI2(
-        `PRODUCT#${product.productId}`,
-        'REVIEW#'
-      );
-      console.log(`   ✅ Found ${productReviews.items.length} reviews for ${product.name}`);
-      productReviews.items.forEach((review: any, index) => {
-        console.log(`   ⭐ Review ${index + 1}: ${review.rating}/5 - "${review.title}"`);
-      });
-    }
-    console.log();
-
-    // 8. Recent orders across all users
-    console.log('8️⃣ Query: Recent delivered orders');
+    // 7. Recent orders across all users
+    console.log('7️⃣ Query: Recent delivered orders');
     console.log('   Pattern: GSI2 query with date filter');
     const recentDeliveredOrders = await orderService.getRecentOrdersByStatus(OrderStatus.DELIVERED, 30);
     console.log(`   ✅ Found ${recentDeliveredOrders.length} orders delivered in last 30 days`);
@@ -128,10 +111,9 @@ async function demonstrateQueries(): Promise<void> {
 2. User's order history (GSI1) 
 3. Orders by status (GSI2)
 4. Products by category (GSI1)
-5. Reviews by product (GSI2)
-6. Aggregated user statistics
-7. Time-based queries with filters
-8. Entity type scans
+5. Aggregated user statistics
+6. Time-based queries with filters
+7. Entity type scans
     `);
 
   } catch (error) {

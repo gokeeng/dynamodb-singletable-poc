@@ -17,10 +17,10 @@ export interface BaseEntity {
  * Key prefixes for different entity types
  */
 export const EntityTypes = {
-  USER: 'USER',
-  ORDER: 'ORDER', 
-  PRODUCT: 'PRODUCT',
-  REVIEW: 'REVIEW'
+  USER: 'Customer',
+  USER_EMAIL: 'CustomerEmail',
+  ORDER: 'Order', 
+  PRODUCT: 'Product'
 } as const;
 
 export type EntityType = typeof EntityTypes[keyof typeof EntityTypes];
@@ -33,8 +33,16 @@ export class KeyBuilder {
     return `${EntityTypes.USER}#${userId}`;
   }
 
-  static userSK(): string {
-    return `${EntityTypes.USER}#PROFILE`;
+  static userSK(userId: string): string {
+    return `${EntityTypes.USER}#${userId}`;
+  }
+
+  static userEmailPK(email: string): string {
+    return `${EntityTypes.USER_EMAIL}#${email}`;
+  }
+
+  static userEmailSK(email: string): string {
+    return `${EntityTypes.USER_EMAIL}#${email}`;
   }
 
   static orderPK(orderId: string): string {
