@@ -1,21 +1,21 @@
 import { DynamoDBService } from '../../src/dal/dynamodb-service';
 import { OrderService } from '../../src/services/order-service';
-import { UserService } from '../../src/services/user-service';
+import { CustomerService } from '../../src/services/customer-service';
 import { OrderStatus } from '../../src/models/order';
 
 describe('OrderService Integration Tests', () => {
   const dynamo = new DynamoDBService();
   const orderService = new OrderService(dynamo);
   const createdOrderIds: string[] = [];
-  const createdUserIds: string[] = [];
-  let orderId: string | undefined;
-  let userId: string | undefined;
+    const createdCustomerIds: string[] = [];
+    let orderId: string | undefined;
+    let customerId: string | undefined;
 
   it('should create an order', async () => {
     // create a user to attach an order to
-    const userService = new UserService(dynamo);
-    const userRes = await userService.createUser({
-      userId: `user-${Date.now()}`,
+    const userService = new CustomerService(dynamo);
+    const userRes = await userService.createCustomer({
+      customerId: `customer-${Date.now()}`,
       firstName: 'Order',
       lastName: 'Tester',
       email: `order.tester.${Date.now()}@example.com`,
@@ -23,13 +23,13 @@ describe('OrderService Integration Tests', () => {
       address: 'Nowhere'
     } as any);
 
-    userId = userRes.userId;
-    createdUserIds.push(userId);
+  customerId = userRes.customerId;
+  createdCustomerIds.push(customerId);
 
     const newOrderId = `order-${Date.now()}`;
     const order = await orderService.createOrder({
       orderId: newOrderId,
-      userId,
+        customerId: customerId,
       items: [
         {
           productId: 'p1',
@@ -60,7 +60,7 @@ describe('OrderService Integration Tests', () => {
   });
 
   it('should get orders by user', async () => {
-  const orders = await orderService.getOrdersByUser(createdUserIds[0]!);
+  const orders = await orderService.getOrdersByCustomer(createdCustomerIds[0]!);
     expect(orders.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -89,12 +89,12 @@ describe('OrderService Integration Tests', () => {
     }
 
     // Cleanup users
-    const userService = new UserService(dynamo);
-    for (const id of createdUserIds) {
+  const userService = new CustomerService(dynamo);
+  for (const id of createdCustomerIds) {
       try {
-        const u = await userService.getUserById(id);
+        const u = await userService.getCustomerById(id);
         if (u) {
-          await userService.deleteUser(id);
+          await userService.deleteCustomer(id);
         }
       } catch (e) {
         // ignore

@@ -1,35 +1,35 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { OrderStatus } from '../models/order';
 import { OrderService } from '../services/order-service';
-import { UserService } from '../services/user-service';
+import { CustomerService } from '../services/customer-service';
 
 async function demonstrateQueries(): Promise<void> {
   console.log('🔍 Demonstrating DynamoDB Single Table Query Patterns...\n');
 
   const dynamoService = new DynamoDBService();
-  const userService = new UserService(dynamoService);
+  const customerService = new CustomerService(dynamoService);
   const orderService = new OrderService(dynamoService);
 
   try {
-    // 1. Get user by email (GSI1 query)
-    console.log('1️⃣ Query: Get user by email');
-    console.log('   Pattern: GSI1 query (USER#EMAIL -> email)');
-    const userByEmail = await userService.getUserByEmail('john.doe@example.com');
-    if (userByEmail) {
-      console.log(`   ✅ Found user: ${userByEmail.firstName} ${userByEmail.lastName}`);
-      console.log(`   📧 Email: ${userByEmail.email}`);
+    // 1. Get customer by email (GSI1 query)
+    console.log('1️⃣ Query: Get customer by email');
+    console.log('   Pattern: GSI1 query (CUSTOMER#EMAIL -> email)');
+    const customerByEmail = await customerService.getCustomerByEmail('john.doe@example.com');
+    if (customerByEmail) {
+      console.log(`   ✅ Found customer: ${customerByEmail.firstName} ${customerByEmail.lastName}`);
+      console.log(`   📧 Email: ${customerByEmail.email}`);
     } else {
-      console.log('   ❌ User not found');
+      console.log('   ❌ Customer not found');
     }
     console.log();
 
-    // 2. Get user's orders (GSI1 query)
-    console.log('2️⃣ Query: Get user\'s order history');
-    console.log('   Pattern: GSI1 query (USER#userId -> ORDER#)');
-    if (userByEmail) {
-      const userOrders = await orderService.getOrdersByUser(userByEmail.userId);
-      console.log(`   ✅ Found ${userOrders.length} orders for ${userByEmail.firstName}`);
-      userOrders.forEach((order, index) => {
+    // 2. Get customer's orders (GSI1 query)
+    console.log('2️⃣ Query: Get customer\'s order history');
+  console.log('   Pattern: GSI1 query (CUSTOMER#customerId -> ORDER#)');
+    if (customerByEmail) {
+        const customerOrders = await orderService.getOrdersByCustomer(customerByEmail!.customerId);
+      console.log(`   ✅ Found ${customerOrders.length} orders for ${customerByEmail.firstName}`);
+      customerOrders.forEach((order, index) => {
         console.log(`   📦 Order ${index + 1}: ${order.orderId} - ${order.status} - $${order.totalAmount}`);
       });
     }
@@ -45,12 +45,12 @@ async function demonstrateQueries(): Promise<void> {
     });
     console.log();
 
-    // 4. Get user order statistics
-    console.log('4️⃣ Query: User order statistics');
+    // 4. Get customer order statistics
+    console.log('4️⃣ Query: Customer order statistics');
     console.log('   Pattern: Multiple queries aggregated');
-    if (userByEmail) {
-      const stats = await orderService.getUserOrderStats(userByEmail.userId);
-      console.log(`   📊 Statistics for ${userByEmail.firstName}:`);
+    if (customerByEmail) {
+    const stats = await orderService.getCustomerOrderStats(customerByEmail.customerId);
+      console.log(`   📊 Statistics for ${customerByEmail.firstName}:`);
       console.log(`      Total Orders: ${stats.totalOrders}`);
       console.log(`      Total Spent: $${stats.totalSpent.toFixed(2)}`);
       console.log(`      Orders by Status:`);
@@ -64,9 +64,9 @@ async function demonstrateQueries(): Promise<void> {
 
     // 5. Demonstrate products by querying GSI1 by category
     console.log('5️⃣ Query: Products by category using GSI1');
-    console.log('   Pattern: GSI1 query (PRODUCT#CATEGORY#Electronics)');
+    console.log('   Pattern: GSI1 query (Product#CATEGORY#Electronics)');
     const allProducts = await dynamoService.queryGSI1(
-      'PRODUCT#CATEGORY#Electronics',
+      'Product#CATEGORY#Electronics',
       undefined,
       { limit: 10 }
     );
@@ -78,9 +78,9 @@ async function demonstrateQueries(): Promise<void> {
 
     // 6. Demonstrate GSI2 product queries by category
     console.log('6️⃣ Query: Products by category');
-    console.log('   Pattern: GSI1 query (PRODUCT#CATEGORY#Electronics)');
+    console.log('   Pattern: GSI1 query (Product#CATEGORY#Electronics)');
     const electronicsProducts = await dynamoService.queryGSI1(
-      'PRODUCT#CATEGORY#Electronics'
+      'Product#CATEGORY#Electronics'
     );
     console.log(`   ✅ Found ${electronicsProducts.items.length} electronics products`);
     electronicsProducts.items.forEach((item: any, index) => {
@@ -88,7 +88,7 @@ async function demonstrateQueries(): Promise<void> {
     });
     console.log();
 
-    // 7. Recent orders across all users
+    // 7. Recent orders across all customers
     console.log('7️⃣ Query: Recent delivered orders');
     console.log('   Pattern: GSI2 query with date filter');
     const recentDeliveredOrders = await orderService.getRecentOrdersByStatus(OrderStatus.DELIVERED, 30);
@@ -107,11 +107,11 @@ async function demonstrateQueries(): Promise<void> {
 ✅ Cost-effective with predictable capacity planning
 
 🔗 Access Patterns Covered:
-1. User lookup by email (GSI1)
-2. User's order history (GSI1) 
+1. Customer lookup by email (GSI1)
+2. Customer's order history (GSI1) 
 3. Orders by status (GSI2)
 4. Products by category (GSI1)
-5. Aggregated user statistics
+5. Aggregated customer statistics
 6. Time-based queries with filters
 7. Entity type scans
     `);

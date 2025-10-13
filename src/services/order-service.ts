@@ -25,8 +25,8 @@ export class OrderService {
   /**
    * Get orders by user using GSI1
    */
-  async getOrdersByUser(userId: string, limit?: number): Promise<Order[]> {
-    const gsi1Keys = KeyBuilder.ordersByUserGSI1(userId);
+  async getOrdersByCustomer(customerId: string, limit?: number): Promise<Order[]> {
+    const gsi1Keys = KeyBuilder.ordersByCustomerGSI1(customerId);
     const result = await this.dynamoService.queryGSI1<Order>(
       gsi1Keys.gsi1pk,
       gsi1Keys.gsi1sk,
@@ -112,14 +112,14 @@ export class OrderService {
   }
 
   /**
-   * Get orders within a date range for a user
+   * Get orders within a date range for a customer
    */
-  async getUserOrdersByDateRange(
-    userId: string, 
+  async getCustomerOrdersByDateRange(
+    customerId: string, 
     startDate: string, 
     endDate: string
   ): Promise<Order[]> {
-    const gsi1Keys = KeyBuilder.ordersByUserGSI1(userId);
+    const gsi1Keys = KeyBuilder.ordersByCustomerGSI1(customerId);
     const result = await this.dynamoService.queryGSI1<Order>(
       gsi1Keys.gsi1pk,
       gsi1Keys.gsi1sk,
@@ -146,18 +146,18 @@ export class OrderService {
   }
 
   /**
-   * Get order statistics by user
+   * Get order statistics by customer
    */
-  async getUserOrderStats(userId: string): Promise<{
+  async getCustomerOrderStats(customerId: string): Promise<{
     totalOrders: number;
     totalSpent: number;
     ordersByStatus: Record<OrderStatus, number>;
   }> {
-    const orders = await this.getOrdersByUser(userId);
+  const orders = await this.getOrdersByCustomer(customerId);
     
     const stats = {
       totalOrders: orders.length,
-      totalSpent: orders.reduce((total, order) => total + order.totalAmount, 0),
+  totalSpent: orders.reduce((total: number, order: Order) => total + order.totalAmount, 0),
       ordersByStatus: {} as Record<OrderStatus, number>
     };
 
@@ -167,7 +167,7 @@ export class OrderService {
     });
 
     // Count orders by status
-    orders.forEach(order => {
+    orders.forEach((order: Order) => {
       stats.ordersByStatus[order.status]++;
     });
 

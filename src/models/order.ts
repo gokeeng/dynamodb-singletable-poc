@@ -4,7 +4,7 @@ import { Address } from './common';
 export interface Order extends BaseEntity {
   entityType: typeof EntityTypes.ORDER;
   orderId: string;
-  userId: string;
+  customerId: string;
   status: OrderStatus;
   totalAmount: number;
   currency: string;
@@ -51,8 +51,8 @@ export class OrderEntity {
       entityType: EntityTypes.ORDER,
       createdAt: now,
       updatedAt: now,
-      // GSI1: Orders by User (for user's order history)
-      ...KeyBuilder.ordersByUserGSI1(data.userId),
+  // GSI1: Orders by Customer (for customer's order history)
+  ...KeyBuilder.ordersByCustomerGSI1((data as any).customerId),
       // GSI2: Orders by Status and Date (for admin queries)
       gsi2pk: `${EntityTypes.ORDER}#STATUS#${data.status}`,
       gsi2sk: data.orderDate

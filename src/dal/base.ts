@@ -17,8 +17,8 @@ export interface BaseEntity {
  * Key prefixes for different entity types
  */
 export const EntityTypes = {
-  USER: 'Customer',
-  USER_EMAIL: 'CustomerEmail',
+  CUSTOMER: 'Customer',
+  CUSTOMER_EMAIL: 'CustomerEmail',
   ORDER: 'Order', 
   PRODUCT: 'Product'
 } as const;
@@ -29,20 +29,20 @@ export type EntityType = typeof EntityTypes[keyof typeof EntityTypes];
  * Utility functions for creating standardized keys
  */
 export class KeyBuilder {
-  static userPK(userId: string): string {
-    return `${EntityTypes.USER}#${userId}`;
+  static customerPK(customerId: string): string {
+    return `${EntityTypes.CUSTOMER}#${customerId}`;
   }
 
-  static userSK(userId: string): string {
-    return `${EntityTypes.USER}#${userId}`;
+  static customerSK(customerId: string): string {
+    return `${EntityTypes.CUSTOMER}#${customerId}`;
   }
 
-  static userEmailPK(email: string): string {
-    return `${EntityTypes.USER_EMAIL}#${email}`;
+  static customerEmailPK(email: string): string {
+    return `${EntityTypes.CUSTOMER_EMAIL}#${email}`;
   }
 
-  static userEmailSK(email: string): string {
-    return `${EntityTypes.USER_EMAIL}#${email}`;
+  static customerEmailSK(email: string): string {
+    return `${EntityTypes.CUSTOMER_EMAIL}#${email}`;
   }
 
   static orderPK(orderId: string): string {
@@ -62,16 +62,16 @@ export class KeyBuilder {
   }
 
   // GSI helpers for common access patterns
-  static userByEmailGSI1(email: string): { gsi1pk: string; gsi1sk: string } {
+  static customerByEmailGSI1(email: string): { gsi1pk: string; gsi1sk: string } {
     return {
-      gsi1pk: `${EntityTypes.USER}#EMAIL`,
+      gsi1pk: `${EntityTypes.CUSTOMER}#EMAIL`,
       gsi1sk: email
     };
   }
 
-  static ordersByUserGSI1(userId: string): { gsi1pk: string; gsi1sk: string } {
+  static ordersByCustomerGSI1(customerId: string): { gsi1pk: string; gsi1sk: string } {
     return {
-      gsi1pk: KeyBuilder.userPK(userId),
+      gsi1pk: KeyBuilder.customerPK(customerId),
       gsi1sk: `${EntityTypes.ORDER}#`
     };
   }

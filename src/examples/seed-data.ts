@@ -3,21 +3,21 @@ import { OrderStatus } from '../models/order';
 import { ProductStatus, ProductEntity } from '../models/product';
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { OrderService } from '../services/order-service';
-import { UserService } from '../services/user-service';
+import { CustomerService } from '../services/customer-service';
 
 async function seedData(): Promise<void> {
   console.log('🌱 Starting data seeding...');
 
   const dynamoService = new DynamoDBService();
-  const userService = new UserService(dynamoService);
+  const customerService = new CustomerService(dynamoService);
   const orderService = new OrderService(dynamoService);
 
   try {
-    // Create sample users
-    console.log('👥 Creating users...');
-    
-    const user1 = await userService.createUser({
-      userId: uuidv4(),
+    // Create sample customers
+    console.log('👥 Creating customers...');
+
+    const customer1 = await customerService.createCustomer({
+      customerId: uuidv4(),
       email: 'john.doe@example.com',
       firstName: 'John',
       lastName: 'Doe',
@@ -32,10 +32,10 @@ async function seedData(): Promise<void> {
         }
       }
     });
-    console.log(`✅ Created user: ${user1.firstName} ${user1.lastName}`);
+    console.log(`✅ Created customer: ${customer1.firstName} ${customer1.lastName}`);
 
-    const user2 = await userService.createUser({
-      userId: uuidv4(),
+    const customer2 = await customerService.createCustomer({
+      customerId: uuidv4(),
       email: 'jane.smith@example.com',
       firstName: 'Jane',
       lastName: 'Smith',
@@ -50,11 +50,11 @@ async function seedData(): Promise<void> {
         }
       }
     });
-    console.log(`✅ Created user: ${user2.firstName} ${user2.lastName}`);
+    console.log(`✅ Created customer: ${customer2.firstName} ${customer2.lastName}`);
 
     // Create sample products
     console.log('📦 Creating products...');
-    
+
     const product1 = ProductEntity.create({
       productId: uuidv4(),
       name: 'Wireless Bluetooth Headphones',
@@ -67,7 +67,6 @@ async function seedData(): Promise<void> {
       stock: 50,
       images: ['https://example.com/headphones1.jpg'],
       attributes: [
-        { name: 'Color', value: 'Black', type: 'COLOR' },
         { name: 'Battery Life', value: '30 hours', type: 'TEXT' },
         { name: 'Wireless', value: 'true', type: 'BOOLEAN' }
       ],
@@ -105,10 +104,10 @@ async function seedData(): Promise<void> {
 
     // Create sample orders
     console.log('🛒 Creating orders...');
-    
+
     const order1 = await orderService.createOrder({
       orderId: uuidv4(),
-      userId: user1.userId,
+      customerId: customer1.customerId,
       status: OrderStatus.DELIVERED,
       totalAmount: 229.98,
       currency: 'USD',
@@ -129,11 +128,11 @@ async function seedData(): Promise<void> {
         }
       ],
       shippingAddress: {
-        street: user1.address.home!.street,
-        city: user1.address.home!.city,
-        state: user1.address.home!.state,
-        zipCode: user1.address.home!.zipCode,
-        country: user1.address.home!.country
+        street: customer1.address.home!.street,
+        city: customer1.address.home!.city,
+        state: customer1.address.home!.state,
+        zipCode: customer1.address.home!.zipCode,
+        country: customer1.address.home!.country
       },
       paymentMethod: {
         type: 'CREDIT_CARD',
@@ -149,7 +148,7 @@ async function seedData(): Promise<void> {
 
     const order2 = await orderService.createOrder({
       orderId: uuidv4(),
-      userId: user2.userId,
+      customerId: customer2.customerId,
       status: OrderStatus.PROCESSING,
       totalAmount: 399.98,
       currency: 'USD',
@@ -163,11 +162,11 @@ async function seedData(): Promise<void> {
         }
       ],
       shippingAddress: {
-        street: user2.address.home!.street,
-        city: user2.address.home!.city,
-        state: user2.address.home!.state,
-        zipCode: user2.address.home!.zipCode,
-        country: user2.address.home!.country
+        street: customer2.address.home!.street,
+        city: customer2.address.home!.city,
+        state: customer2.address.home!.state,
+        zipCode: customer2.address.home!.zipCode,
+        country: customer2.address.home!.country
       },
       paymentMethod: {
         type: 'PAYPAL'
@@ -177,14 +176,7 @@ async function seedData(): Promise<void> {
     console.log(`✅ Created order: ${order2.orderId}`);
 
     console.log('🎉 Data seeding completed successfully!');
-    console.log(`
-📊 Summary:
-- Users created: 2
-- Products created: 2  
-- Orders created: 2
-
-🚀 You can now run the query examples to see the data in action!
-    `);
+    console.log(`\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`);
 
   } catch (error) {
     console.error('❌ Error seeding data:', error);

@@ -35,6 +35,8 @@ npm run demo:seed
 npm run demo:query
 ```
 
+Note: it's recommended to run the demo scripts using the npm scripts (shown above) rather than invoking the `./scripts/with-env.sh` wrapper directly. Running via `npm run` ensures project-local binaries (like `ts-node`) from `node_modules/.bin` are available on PATH.
+
 ## Shorthand: npm run with-env
 
 I've added a convenience npm script `with-env` that forwards to the `scripts/with-env.sh` wrapper.
@@ -52,7 +54,7 @@ The wrapper sets LocalStack-friendly AWS env vars and disables the AWS CLI pager
 
 ## What This Demonstrates
 
-- Single Table Design: Multiple entity types (Users, Orders, Products) in one DynamoDB table
+- Single Table Design: Multiple entity types (Customers, Orders, Products) in one DynamoDB table
 - Access Patterns: Efficient queries using partition keys and GSIs
 - TypeScript: Strongly typed models with camelCase properties
 - LocalStack: Local development without AWS costs
@@ -61,7 +63,7 @@ The wrapper sets LocalStack-friendly AWS env vars and disables the AWS CLI pager
 
 ```
 src/
-├── models/           # Entity definitions (User, Order, Product)
+├── models/           # Entity definitions (Customer, Order, Product)
 ├── dal/              # Data access layer with DynamoDB operations
 ├── services/         # Business logic services
 └── examples/         # Demo scripts showing usage patterns
@@ -79,25 +81,25 @@ npm run localstack:start     # Start LocalStack
 npm run localstack:stop      # Stop LocalStack
 npm run stack:deploy         # Deploy DynamoDB table (uses --endpoint-url to talk to LocalStack)
 
-# Demo
-npm run demo:seed            # Create sample data (uses the with-env wrapper)
-npm run demo:query           # Show query patterns
-npm run with-env             # Run a command with LocalStack env (usage: npm run with-env -- <command>)
-
-# Tests
-npm run test                 # Run unit/integration tests (jest)
-npm run test:integration     # Run integration tests against LocalStack (wrapper sets env)
 ```
+import { CustomerService } from './services/customer-service';
+import { OrderService } from './services/order-service';
 
-## Running integration tests
+// Create customer with multiple addresses
+const customer = await customerService.createCustomer({
+  customerId: 'customer-123',
+  email: 'john@example.com',
+  firstName: 'John',
+  lastName: 'Doe',
+  address: {
+    home: { addressLine1: '123 Main St', city: 'NYC' },
+    work: { addressLine1: '456 Office Ave', city: 'NYC' }
+  }
+});
 
-Integration tests run against the LocalStack instance. Make sure LocalStack is running (via `npm run setup` or `npm run localstack:start`) and then run:
-
-```bash
-npm run test:integration
+// Get customer's order history
+const orders = await orderService.getOrdersByCustomer(customer.pk.split('#')[1]);
 ```
-
-## Troubleshooting
 
 - If the LocalStack health endpoint isn't ready, `npm run setup` will wait and print logs. You can also check:
 
@@ -112,11 +114,12 @@ docker-compose logs -f localstack
 ## Usage Example (snippet)
 
 ```typescript
-import { UserService } from './services/user-service';
+import { CustomerService } from './services/customer-service';
 import { OrderService } from './services/order-service';
 
-// Create user with multiple addresses
-const user = await userService.createUser({
+// Create customer with multiple addresses
+const customer = await customerService.createCustomer({
+  customerId: 'customer-123',
   email: 'john@example.com',
   firstName: 'John',
   lastName: 'Doe',
@@ -126,8 +129,8 @@ const user = await userService.createUser({
   }
 });
 
-// Get user's order history
-const orders = await orderService.getOrdersByUser(user.pk.split('#')[1]);
+// Get customer's order history
+const orders = await orderService.getOrdersByCustomer(customer.pk.split('#')[1]);
 ```
 
 ## Prerequisites
