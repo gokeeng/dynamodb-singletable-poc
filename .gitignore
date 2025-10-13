@@ -11,10 +11,7 @@ build/
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 
 # Logs
 *.log
@@ -113,3 +110,10 @@ public
 # Temporary folders
 tmp/
 temp/
+
+# Operating system files
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
