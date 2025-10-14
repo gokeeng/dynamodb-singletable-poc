@@ -1,41 +1,21 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { OrderStatus } from '../models/order';
 import { OrderService } from '../services/order-service';
-import { CustomerService } from '../services/customer-service';
 
 async function demonstrateQueries(): Promise<void> {
   console.log('🔍 Demonstrating DynamoDB Single Table Query Patterns...\n');
 
   const dynamoService = new DynamoDBService();
-  const customerService = new CustomerService(dynamoService);
   const orderService = new OrderService(dynamoService);
 
   try {
     // 1. Get customer by email (GSI1 query)
-    console.log('1️⃣ Query: Find customer by name (scan/demo only)');
-    console.log('   Pattern: name search (demo scan)');
-    const customersFound = await customerService.searchCustomersByName('John');
-    const customerByEmail = customersFound.length > 0 ? customersFound[0]! : null;
-    if (customerByEmail) {
-      console.log(`   ✅ Found customer: ${customerByEmail.firstName} ${customerByEmail.lastName}`);
-      console.log(`   📧 Email: ${customerByEmail.email}`);
-    } else {
-      console.log('   ❌ Customer not found');
-    }
+    console.log('1️⃣ Query examples (name-search demo removed)');
     console.log();
 
     // 2. Get customer's orders (GSI1 query)
-    console.log("2️⃣ Query: Get customer's order history");
-    console.log('   Pattern: GSI1 query (CUSTOMER#customerId -> ORDER#)');
-    if (customerByEmail) {
-      const customerOrders = await orderService.getOrdersByCustomer(customerByEmail!.customerId);
-      console.log(`   ✅ Found ${customerOrders.length} orders for ${customerByEmail.firstName}`);
-      customerOrders.forEach((order, index) => {
-        console.log(
-          `   📦 Order ${index + 1}: ${order.orderId} - ${order.status} - $${order.totalAmount}`
-        );
-      });
-    }
+    // This example previously demonstrated fetching orders for a found customer. Replace with
+    // a getCustomerById + orderService.getOrdersByCustomer(customerId) call in your code.
     console.log();
 
     // 3. Get orders by status (GSI2 query)
@@ -51,20 +31,8 @@ async function demonstrateQueries(): Promise<void> {
     console.log();
 
     // 4. Get customer order statistics
-    console.log('4️⃣ Query: Customer order statistics');
-    console.log('   Pattern: Multiple queries aggregated');
-    if (customerByEmail) {
-      const stats = await orderService.getCustomerOrderStats(customerByEmail.customerId);
-      console.log(`   📊 Statistics for ${customerByEmail.firstName}:`);
-      console.log(`      Total Orders: ${stats.totalOrders}`);
-      console.log(`      Total Spent: $${stats.totalSpent.toFixed(2)}`);
-      console.log(`      Orders by Status:`);
-      Object.entries(stats.ordersByStatus).forEach(([status, count]) => {
-        if (count > 0) {
-          console.log(`        ${status}: ${count}`);
-        }
-      });
-    }
+    // This example previously aggregated stats for a discovered customer. Replace with
+    // a lookup + orderService.getCustomerOrderStats(customerId) call in your code.
     console.log();
 
     // 5. Demonstrate products by querying GSI1 by category
@@ -74,8 +42,12 @@ async function demonstrateQueries(): Promise<void> {
       limit: 10,
     });
     console.log(`   ✅ Found ${allProducts.items.length} products`);
-    allProducts.items.forEach((item: any, index) => {
-      console.log(`   🛍️  Product ${index + 1}: ${item.name} - $${item.price} (${item.category})`);
+    allProducts.items.forEach((item: unknown, index) => {
+      const p = item as Record<string, unknown>;
+      const name = String(p['name'] ?? '');
+      const price = Number(p['price'] ?? 0);
+      const category = String(p['category'] ?? '');
+      console.log(`   🛍️  Product ${index + 1}: ${name} - $${price} (${category})`);
     });
     console.log();
 
@@ -84,8 +56,12 @@ async function demonstrateQueries(): Promise<void> {
     console.log('   Pattern: GSI1 query (Product#CATEGORY#Electronics)');
     const electronicsProducts = await dynamoService.queryGSI1('Product#CATEGORY#Electronics');
     console.log(`   ✅ Found ${electronicsProducts.items.length} electronics products`);
-    electronicsProducts.items.forEach((item: any, index) => {
-      console.log(`   💻 Product ${index + 1}: ${item.name} - ${item.brand} - $${item.price}`);
+    electronicsProducts.items.forEach((item: unknown, index) => {
+      const p = item as Record<string, unknown>;
+      const name = String(p['name'] ?? '');
+      const brand = String(p['brand'] ?? '');
+      const price = Number(p['price'] ?? 0);
+      console.log(`   💻 Product ${index + 1}: ${name} - ${brand} - $${price}`);
     });
     console.log();
 

@@ -1,6 +1,5 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { Customer, CustomerEntity } from '../models/customer';
-import { UserStatus } from '../models/common';
 import { BaseEntity } from '../dal/base';
 import { KeyBuilder } from '../dal/key-builder';
 import { CustomerEmailEntity } from '../models/customerEmail';
@@ -45,6 +44,10 @@ export class CustomerService {
     customerId: string,
     updates: Partial<Pick<Customer, 'firstName' | 'lastName' | 'phone' | 'address'>>
   ): Promise<Customer> {
+    // Prevent updates to email through this method. Email changes require a dedicated flow.
+    if (Object.prototype.hasOwnProperty.call(updates, 'email')) {
+      throw new Error('Updating email is not supported via updateCustomer.');
+    }
     const pk = KeyBuilder.customerPK(customerId);
     const sk = KeyBuilder.customerSK(customerId);
     return await this.dynamoService.updateItem<Customer>(pk, sk, updates);
@@ -57,44 +60,5 @@ export class CustomerService {
     const pk = KeyBuilder.customerPK(customerId);
     const sk = KeyBuilder.customerSK(customerId);
     await this.dynamoService.deleteItem(pk, sk);
-  }
-
-  /**
-   * Search customers by name (scan operation - demo only)
-   */
-  async searchCustomersByName(searchTerm: string): Promise<Customer[]> {
-    const result = await this.dynamoService.scan<Customer>({
-      filterExpression: 'contains(#firstName, :search) OR contains(#lastName, :search)',
-      expressionAttributeNames: {
-        '#firstName': 'FirstName',
-        '#lastName': 'LastName',
-      },
-      expressionAttributeValues: {
-        ':search': searchTerm,
-      },
-      limit: 50,
-    });
-
-    return result.items;
-  }
-
-  async getActiveCustomers(limit?: number): Promise<Customer[]> {
-    const result = await this.dynamoService.queryByPKAndSK<Customer>(
-      'CUSTOMER#',
-      'begins_with(PK, :pk)',
-      'CUSTOMER#',
-      {
-        filterExpression: '#status = :status',
-        expressionAttributeNames: {
-          '#status': 'Status',
-        },
-        expressionAttributeValues: {
-          ':status': UserStatus.ACTIVE,
-        },
-        limit,
-      }
-    );
-
-    return result.items;
   }
 }
