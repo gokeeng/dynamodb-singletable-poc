@@ -1,4 +1,5 @@
-import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
+import { BaseEntity, EntityTypes } from '../dal/base';
+import { KeyBuilder } from '../dal/key-builder';
 import { Addresses } from './common';
 
 export interface Customer extends BaseEntity {
@@ -16,12 +17,12 @@ export class CustomerEntity {
     const now = new Date().toISOString();
     const customer: Customer = {
       ...data,
-      pk: KeyBuilder.customerPK((data as any).customerId),
-      sk: KeyBuilder.customerSK((data as any).customerId),
+      pk: KeyBuilder.customerPK((data as Customer).customerId),
+      sk: KeyBuilder.customerSK((data as Customer).customerId),
       entityType: EntityTypes.CUSTOMER,
       createdAt: now,
       updatedAt: now,
-      ...KeyBuilder.customerByEmailGSI1((data as any).email)
+      ...KeyBuilder.customerByEmailGSI1((data as Customer).email),
     };
 
     return customer;
@@ -30,7 +31,7 @@ export class CustomerEntity {
   static updateTimestamp(customer: Customer): Customer {
     return {
       ...customer,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
   }
 

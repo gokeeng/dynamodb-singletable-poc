@@ -1,8 +1,10 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { Customer, CustomerEntity } from '../models/customer';
 import { UserStatus } from '../models/common';
-import { BaseEntity, KeyBuilder } from '../dal/base';
-
+import { BaseEntity } from '../dal/base';
+import { KeyBuilder } from '../dal/key-builder';
+import { CustomerEmailEntity } from '../models/customerEmail';
+import ConditionExpressionBuilder from '../dal/condition-expression-builder';
 export class CustomerService {
   constructor(private dynamoService: DynamoDBService) {}
 
@@ -11,7 +13,20 @@ export class CustomerService {
    */
   async createCustomer(customerData: Omit<Customer, keyof BaseEntity>): Promise<Customer> {
     const customer = CustomerEntity.create(customerData);
-    return await this.dynamoService.putItem(customer);
+    const customerEmail = CustomerEmailEntity.create(customerData);
+
+    await this.dynamoService.transactPutItems([
+      {
+        Item: customer,
+        ...ConditionExpressionBuilder.attributeNotExists('pk'),
+      },
+      {
+        Item: customerEmail,
+        ...ConditionExpressionBuilder.attributeNotExists('pk'),
+      },
+    ]);
+
+    return customer as Customer;
   }
 
   /**
@@ -21,18 +36,6 @@ export class CustomerService {
     const pk = KeyBuilder.customerPK(customerId);
     const sk = KeyBuilder.customerSK(customerId);
     return await this.dynamoService.getItem<Customer>(pk, sk);
-  }
-
-  /**
-   * Get customer by email using GSI1
-   */
-  async getCustomerByEmail(email: string): Promise<Customer | null> {
-    const gsi1Keys = KeyBuilder.customerByEmailGSI1(email);
-    const result = await this.dynamoService.queryGSI1<Customer>(
-      gsi1Keys.gsi1pk,
-      gsi1Keys.gsi1sk
-    );
-    return result.items.length > 0 ? result.items[0]! : null;
   }
 
   /**
@@ -60,21 +63,17 @@ export class CustomerService {
    * Search customers by name (scan operation - demo only)
    */
   async searchCustomersByName(searchTerm: string): Promise<Customer[]> {
-    const result = await this.dynamoService.queryByPKAndSK<Customer>(
-      'CUSTOMER#',
-      'begins_with(PK, :pk)',
-      'CUSTOMER#',
-      {
-        filterExpression: 'contains(#firstName, :search) OR contains(#lastName, :search)',
-        expressionAttributeNames: {
-          '#firstName': 'FirstName',
-          '#lastName': 'LastName'
-        },
-        expressionAttributeValues: {
-          ':search': searchTerm
-        }
-      }
-    );
+    const result = await this.dynamoService.scan<Customer>({
+      filterExpression: 'contains(#firstName, :search) OR contains(#lastName, :search)',
+      expressionAttributeNames: {
+        '#firstName': 'FirstName',
+        '#lastName': 'LastName',
+      },
+      expressionAttributeValues: {
+        ':search': searchTerm,
+      },
+      limit: 50,
+    });
 
     return result.items;
   }
@@ -87,12 +86,12 @@ export class CustomerService {
       {
         filterExpression: '#status = :status',
         expressionAttributeNames: {
-          '#status': 'Status'
+          '#status': 'Status',
         },
         expressionAttributeValues: {
-          ':status': UserStatus.ACTIVE
+          ':status': UserStatus.ACTIVE,
         },
-        limit
+        limit,
       }
     );
 

@@ -28,9 +28,9 @@ async function seedData(): Promise<void> {
           city: 'New York',
           state: 'NY',
           zipCode: '10001',
-          country: 'USA'
-        }
-      }
+          country: 'USA',
+        },
+      },
     });
     console.log(`✅ Created customer: ${customer1.firstName} ${customer1.lastName}`);
 
@@ -46,9 +46,9 @@ async function seedData(): Promise<void> {
           city: 'Los Angeles',
           state: 'CA',
           zipCode: '90210',
-          country: 'USA'
-        }
-      }
+          country: 'USA',
+        },
+      },
     });
     console.log(`✅ Created customer: ${customer2.firstName} ${customer2.lastName}`);
 
@@ -68,12 +68,12 @@ async function seedData(): Promise<void> {
       images: ['https://example.com/headphones1.jpg'],
       attributes: [
         { name: 'Battery Life', value: '30 hours', type: 'TEXT' },
-        { name: 'Wireless', value: 'true', type: 'BOOLEAN' }
+        { name: 'Wireless', value: 'true', type: 'BOOLEAN' },
       ],
       status: ProductStatus.ACTIVE,
       averageRating: 4.5,
       reviewCount: 128,
-      tags: ['wireless', 'bluetooth', 'headphones', 'noise-cancelling']
+      tags: ['wireless', 'bluetooth', 'headphones', 'noise-cancelling'],
     });
     await dynamoService.putItem(product1);
     console.log(`✅ Created product: ${product1.name}`);
@@ -92,12 +92,12 @@ async function seedData(): Promise<void> {
       attributes: [
         { name: 'Material', value: 'Organic Cotton', type: 'TEXT' },
         { name: 'Size', value: 'Medium', type: 'SIZE' },
-        { name: 'Color', value: 'Blue', type: 'COLOR' }
+        { name: 'Color', value: 'Blue', type: 'COLOR' },
       ],
       status: ProductStatus.ACTIVE,
       averageRating: 4.2,
       reviewCount: 64,
-      tags: ['organic', 'cotton', 'clothing', 'eco-friendly']
+      tags: ['organic', 'cotton', 'clothing', 'eco-friendly'],
     });
     await dynamoService.putItem(product2);
     console.log(`✅ Created product: ${product2.name}`);
@@ -117,32 +117,32 @@ async function seedData(): Promise<void> {
           productName: product1.name,
           quantity: 1,
           unitPrice: 199.99,
-          totalPrice: 199.99
+          totalPrice: 199.99,
         },
         {
           productId: product2.productId,
           productName: product2.name,
           quantity: 1,
           unitPrice: 29.99,
-          totalPrice: 29.99
-        }
+          totalPrice: 29.99,
+        },
       ],
       shippingAddress: {
         street: customer1.address.home!.street,
         city: customer1.address.home!.city,
         state: customer1.address.home!.state,
         zipCode: customer1.address.home!.zipCode,
-        country: customer1.address.home!.country
+        country: customer1.address.home!.country,
       },
       paymentMethod: {
         type: 'CREDIT_CARD',
         last4: '1234',
-        brand: 'Visa'
+        brand: 'Visa',
       },
       orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
       shippedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
       deliveredDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      trackingNumber: 'TRK123456789'
+      trackingNumber: 'TRK123456789',
     });
     console.log(`✅ Created order: ${order1.orderId}`);
 
@@ -158,26 +158,27 @@ async function seedData(): Promise<void> {
           productName: product1.name,
           quantity: 2,
           unitPrice: 199.99,
-          totalPrice: 399.98
-        }
+          totalPrice: 399.98,
+        },
       ],
       shippingAddress: {
         street: customer2.address.home!.street,
         city: customer2.address.home!.city,
         state: customer2.address.home!.state,
         zipCode: customer2.address.home!.zipCode,
-        country: customer2.address.home!.country
+        country: customer2.address.home!.country,
       },
       paymentMethod: {
-        type: 'PAYPAL'
+        type: 'PAYPAL',
       },
-      orderDate: new Date().toISOString()
+      orderDate: new Date().toISOString(),
     });
     console.log(`✅ Created order: ${order2.orderId}`);
 
     console.log('🎉 Data seeding completed successfully!');
-    console.log(`\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`);
-
+    console.log(
+      `\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`
+    );
   } catch (error) {
     console.error('❌ Error seeding data:', error);
     process.exit(1);

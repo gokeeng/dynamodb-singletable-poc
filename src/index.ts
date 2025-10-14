@@ -1,4 +1,4 @@
-import { DynamoDBService } from "./dal/dynamodb-service";
+import { DynamoDBService } from './dal/dynamodb-service';
 
 /**
  * Main entry point that demonstrates the single table design
@@ -10,7 +10,7 @@ async function main(): Promise<void> {
     // Test connection
     console.log('🔗 Testing DynamoDB connection...');
     const dynamoService = new DynamoDBService();
-    
+
     // Try a simple query to test connectivity
     await dynamoService.queryByPK('TEST', { limit: 1 });
     console.log('✅ DynamoDB connection successful!\n');
@@ -33,7 +33,6 @@ async function main(): Promise<void> {
     console.log('  2. Deploy the DynamoDB table: npm run stack:deploy');
     console.log('  3. Seed some sample data: npm run demo:seed');
     console.log('  4. Run query examples: npm run demo:query\n');
-
   } catch (error) {
     console.error('❌ Error connecting to DynamoDB:', error);
     console.log('\n🔧 Troubleshooting:');

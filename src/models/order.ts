@@ -1,4 +1,5 @@
-import { BaseEntity, EntityTypes, KeyBuilder } from '../dal/base';
+import { BaseEntity, EntityTypes } from '../dal/base';
+import { KeyBuilder } from '../dal/key-builder';
 import { Address } from './common';
 
 export interface Order extends BaseEntity {
@@ -38,7 +39,7 @@ export enum OrderStatus {
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
-  REFUNDED = 'REFUNDED'
+  REFUNDED = 'REFUNDED',
 }
 
 export class OrderEntity {
@@ -51,11 +52,11 @@ export class OrderEntity {
       entityType: EntityTypes.ORDER,
       createdAt: now,
       updatedAt: now,
-  // GSI1: Orders by Customer (for customer's order history)
-  ...KeyBuilder.ordersByCustomerGSI1((data as any).customerId),
+      // GSI1: Orders by Customer (for customer's order history)
+      ...KeyBuilder.ordersByCustomerGSI1((data as any).customerId),
       // GSI2: Orders by Status and Date (for admin queries)
       gsi2pk: `${EntityTypes.ORDER}#STATUS#${data.status}`,
-      gsi2sk: data.orderDate
+      gsi2sk: data.orderDate,
     };
 
     return order;
@@ -66,7 +67,7 @@ export class OrderEntity {
       ...order,
       status: newStatus,
       updatedAt: new Date().toISOString(),
-      gsi2pk: `${EntityTypes.ORDER}#STATUS#${newStatus}`
+      gsi2pk: `${EntityTypes.ORDER}#STATUS#${newStatus}`,
     };
 
     // Update shipped/delivered dates based on status
@@ -87,7 +88,7 @@ export class OrderEntity {
     return {
       ...order,
       trackingNumber: trackingNumber,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
   }
 }

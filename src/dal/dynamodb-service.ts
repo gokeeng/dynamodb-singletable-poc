@@ -4,8 +4,10 @@ import {
   UpdateCommand,
   DeleteCommand,
   QueryCommand,
+  ScanCommand,
   BatchWriteCommand,
-  BatchGetCommand
+  BatchGetCommand,
+  TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClientFactory } from './dynamodb-client';
@@ -42,7 +44,7 @@ export class DynamoDBService {
   async putItem<T extends BaseEntity>(item: T): Promise<T> {
     const command = new PutCommand({
       TableName: this.tableName,
-      Item: item
+      Item: item,
     });
 
     await this.client.send(command);
@@ -55,7 +57,7 @@ export class DynamoDBService {
   async getItem<T extends BaseEntity>(pk: string, sk: string): Promise<T | null> {
     const command = new GetCommand({
       TableName: this.tableName,
-      Key: { pk: pk, sk: sk }
+      Key: { pk: pk, sk: sk },
     });
 
     const result = await this.client.send(command);
@@ -77,13 +79,13 @@ export class DynamoDBService {
     // Add UpdatedAt timestamp
     const updatesWithTimestamp = {
       ...updates,
-      UpdatedAt: new Date().toISOString()
+      UpdatedAt: new Date().toISOString(),
     };
 
     Object.entries(updatesWithTimestamp).forEach(([key, value], index) => {
       const attributeName = `#attr${index}`;
       const attributeValue = `:val${index}`;
-      
+
       updateExpression.push(`${attributeName} = ${attributeValue}`);
       expressionAttributeNames[attributeName] = key;
       expressionAttributeValues[attributeValue] = value;
@@ -95,7 +97,7 @@ export class DynamoDBService {
       UpdateExpression: `SET ${updateExpression.join(', ')}`,
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
-      ReturnValues: 'ALL_NEW'
+      ReturnValues: 'ALL_NEW',
     });
 
     const result = await this.client.send(command);
@@ -108,7 +110,7 @@ export class DynamoDBService {
   async deleteItem(pk: string, sk: string): Promise<void> {
     const command = new DeleteCommand({
       TableName: this.tableName,
-      Key: { pk: pk, sk: sk }
+      Key: { pk: pk, sk: sk },
     });
 
     await this.client.send(command);
@@ -126,22 +128,45 @@ export class DynamoDBService {
       KeyConditionExpression: 'pk = :pk',
       ExpressionAttributeValues: {
         ':pk': pk,
-        ...options.expressionAttributeValues
+        ...options.expressionAttributeValues,
       },
       ExpressionAttributeNames: options.expressionAttributeNames,
       FilterExpression: options.filterExpression,
       Limit: options.limit,
       ExclusiveStartKey: options.exclusiveStartKey,
-      ScanIndexForward: options.scanIndexForward
+      ScanIndexForward: options.scanIndexForward,
     });
 
     const result = await this.client.send(command);
-    
+
     return {
       items: (result.Items as T[]) || [],
       lastEvaluatedKey: result.LastEvaluatedKey,
       count: result.Count || 0,
-      scannedCount: result.ScannedCount || 0
+      scannedCount: result.ScannedCount || 0,
+    };
+  }
+
+  /**
+   * Scan items with an optional filter expression. Intended for demo/administrative use only.
+   */
+  async scan<T extends BaseEntity>(options: QueryOptions = {}): Promise<QueryResult<T>> {
+    const command = new ScanCommand({
+      TableName: this.tableName,
+      FilterExpression: options.filterExpression,
+      ExpressionAttributeNames: options.expressionAttributeNames,
+      ExpressionAttributeValues: options.expressionAttributeValues,
+      Limit: options.limit,
+      ExclusiveStartKey: options.exclusiveStartKey,
+    });
+
+    const result = await this.client.send(command);
+
+    return {
+      items: (result.Items as T[]) || [],
+      lastEvaluatedKey: result.LastEvaluatedKey,
+      count: result.Count || 0,
+      scannedCount: result.ScannedCount || 0,
     };
   }
 
@@ -154,28 +179,34 @@ export class DynamoDBService {
     skValue: any,
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
+    const expressionAttributeValues: Record<string, any> = {
+      ':pk': pk,
+      ...options.expressionAttributeValues,
+    };
+
+    // only set :sk if the skCondition references it
+    if (skCondition && skCondition.includes(':sk')) {
+      expressionAttributeValues[':sk'] = skValue;
+    }
+
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: `pk = :pk AND ${skCondition}`,
-      ExpressionAttributeValues: {
-        ':pk': pk,
-        ':sk': skValue,
-        ...options.expressionAttributeValues
-      },
+      ExpressionAttributeValues: expressionAttributeValues,
       ExpressionAttributeNames: options.expressionAttributeNames,
       FilterExpression: options.filterExpression,
       Limit: options.limit,
       ExclusiveStartKey: options.exclusiveStartKey,
-      ScanIndexForward: options.scanIndexForward
+      ScanIndexForward: options.scanIndexForward,
     });
 
     const result = await this.client.send(command);
-    
+
     return {
       items: (result.Items as T[]) || [],
       lastEvaluatedKey: result.LastEvaluatedKey,
       count: result.Count || 0,
-      scannedCount: result.ScannedCount || 0
+      scannedCount: result.ScannedCount || 0,
     };
   }
 
@@ -190,7 +221,7 @@ export class DynamoDBService {
     let keyConditionExpression = 'gsi1pk = :gsi1pk';
     const expressionAttributeValues: Record<string, any> = {
       ':gsi1pk': gsi1pk,
-      ...options.expressionAttributeValues
+      ...options.expressionAttributeValues,
     };
 
     if (gsi1sk) {
@@ -207,16 +238,16 @@ export class DynamoDBService {
       FilterExpression: options.filterExpression,
       Limit: options.limit,
       ExclusiveStartKey: options.exclusiveStartKey,
-      ScanIndexForward: options.scanIndexForward
+      ScanIndexForward: options.scanIndexForward,
     });
 
     const result = await this.client.send(command);
-    
+
     return {
       items: (result.Items as T[]) || [],
       lastEvaluatedKey: result.LastEvaluatedKey,
       count: result.Count || 0,
-      scannedCount: result.ScannedCount || 0
+      scannedCount: result.ScannedCount || 0,
     };
   }
 
@@ -231,7 +262,7 @@ export class DynamoDBService {
     let keyConditionExpression = 'gsi2pk = :gsi2pk';
     const expressionAttributeValues: Record<string, any> = {
       ':gsi2pk': gsi2pk,
-      ...options.expressionAttributeValues
+      ...options.expressionAttributeValues,
     };
 
     if (gsi2sk) {
@@ -248,16 +279,16 @@ export class DynamoDBService {
       FilterExpression: options.filterExpression,
       Limit: options.limit,
       ExclusiveStartKey: options.exclusiveStartKey,
-      ScanIndexForward: options.scanIndexForward
+      ScanIndexForward: options.scanIndexForward,
     });
 
     const result = await this.client.send(command);
-    
+
     return {
       items: (result.Items as T[]) || [],
       lastEvaluatedKey: result.LastEvaluatedKey,
       count: result.Count || 0,
-      scannedCount: result.ScannedCount || 0
+      scannedCount: result.ScannedCount || 0,
     };
   }
 
@@ -270,19 +301,19 @@ export class DynamoDBService {
   ): Promise<void> {
     const requests: any[] = [];
 
-    putItems.forEach(item => {
+    putItems.forEach((item) => {
       requests.push({
         PutRequest: {
-          Item: item
-        }
+          Item: item,
+        },
       });
     });
 
-    deleteKeys.forEach(key => {
+    deleteKeys.forEach((key) => {
       requests.push({
         DeleteRequest: {
-          Key: key
-        }
+          Key: key,
+        },
       });
     });
 
@@ -290,11 +321,11 @@ export class DynamoDBService {
     const batchSize = 25;
     for (let i = 0; i < requests.length; i += batchSize) {
       const batch = requests.slice(i, i + batchSize);
-      
+
       const command = new BatchWriteCommand({
         RequestItems: {
-          [this.tableName]: batch
-        }
+          [this.tableName]: batch,
+        },
       });
 
       await this.client.send(command);
@@ -304,22 +335,20 @@ export class DynamoDBService {
   /**
    * Batch get items
    */
-  async batchGet<T extends BaseEntity>(
-    keys: Array<{ PK: string; SK: string }>
-  ): Promise<T[]> {
+  async batchGet<T extends BaseEntity>(keys: Array<{ PK: string; SK: string }>): Promise<T[]> {
     const items: T[] = [];
-    
+
     // DynamoDB batch get has a limit of 100 items
     const batchSize = 100;
     for (let i = 0; i < keys.length; i += batchSize) {
       const batch = keys.slice(i, i + batchSize);
-      
+
       const command = new BatchGetCommand({
         RequestItems: {
           [this.tableName]: {
-            Keys: batch
-          }
-        }
+            Keys: batch,
+          },
+        },
       });
 
       const result = await this.client.send(command);
@@ -329,5 +358,49 @@ export class DynamoDBService {
     }
 
     return items;
+  }
+
+  /**
+   * Perform a TransactWrite to put multiple items only if their conditions are satisfied.
+   * Each entry can include an optional ConditionExpression and ExpressionAttributeValues/Names.
+   * If any condition fails the whole transaction will fail.
+   */
+  async transactPutItems(
+    entries: Array<{
+      Item: BaseEntity;
+      ConditionExpression?: string;
+      ExpressionAttributeValues?: Record<string, any>;
+      ExpressionAttributeNames?: Record<string, string>;
+    }>
+  ): Promise<void> {
+    if (!entries || entries.length === 0) return;
+
+    // Build TransactItems array
+    const transactItems = entries.map((e) => {
+      const put: any = {
+        TableName: this.tableName,
+        Item: e.Item,
+      };
+
+      if (e.ConditionExpression) {
+        put.ConditionExpression = e.ConditionExpression;
+      }
+
+      if (e.ExpressionAttributeValues) {
+        put.ExpressionAttributeValues = e.ExpressionAttributeValues;
+      }
+
+      if (e.ExpressionAttributeNames) {
+        put.ExpressionAttributeNames = e.ExpressionAttributeNames;
+      }
+
+      return { Put: put };
+    });
+
+    const command = new TransactWriteCommand({
+      TransactItems: transactItems,
+    });
+
+    await this.client.send(command as any);
   }
 }

@@ -13,6 +13,9 @@ Parameters:
     AllowedValues: [local, dev, staging, prod]
     Description: Environment name
 
+Conditions:
+  IsNotLocal: !Not [!Equals [!Ref Environment, local]]
+
 Resources:
   # Main DynamoDB Table with Single Table Design
   BookstoreTable:
@@ -65,18 +68,6 @@ Resources:
           Projection:
             ProjectionType: ALL
       
-      # Point-in-time recovery
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
-      
-      # Server-side encryption
-      SSESpecification:
-        SSEEnabled: true
-      
-      # Stream configuration for change data capture
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
-      
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -97,9 +88,3 @@ Outputs:
     Value: !GetAtt BookstoreTable.Arn
     Export:
       Name: !Sub '${AWS::StackName}-TableArn'
-  
-  StreamArn:
-    Description: ARN of the DynamoDB stream
-    Value: !GetAtt BookstoreTable.StreamArn
-    Export:
-      Name: !Sub '${AWS::StackName}-StreamArn'

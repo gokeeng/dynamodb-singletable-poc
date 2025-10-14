@@ -16,7 +16,11 @@ for (let attempt = 1; attempt <= maxAttempts; attempt++) {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.log(`Waiting for LocalStack... (${attempt}/${maxAttempts})`);
-    try { execSync('sleep 1'); } catch (e) { /* ignore */ }
+    try {
+      execSync('sleep 1');
+    } catch (e) {
+      /* ignore */
+    }
     if (attempt === maxAttempts) {
       throw new Error('LocalStack did not become ready in time');
     }

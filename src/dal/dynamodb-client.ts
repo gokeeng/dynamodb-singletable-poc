@@ -13,8 +13,8 @@ export class DynamoDBClientFactory {
 
   static getInstance(config?: DynamoDBConfig): DynamoDBDocumentClient {
     if (!this.instance) {
-      const clientConfig: any = {
-        region: config?.region || process.env.AWS_DEFAULT_REGION || 'eu-west-1'
+      const clientConfig: Record<string, unknown> = {
+        region: config?.region || process.env.AWS_DEFAULT_REGION || 'eu-west-1',
       };
 
       // For LocalStack or custom endpoint
@@ -22,7 +22,7 @@ export class DynamoDBClientFactory {
         clientConfig.endpoint = config?.endpoint || process.env.DYNAMODB_ENDPOINT;
         clientConfig.credentials = {
           accessKeyId: config?.accessKeyId || process.env.AWS_ACCESS_KEY_ID || 'test',
-          secretAccessKey: config?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY || 'test'
+          secretAccessKey: config?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY || 'test',
         };
       }
 
@@ -34,6 +34,7 @@ export class DynamoDBClientFactory {
   }
 
   static reset(): void {
-    this.instance = undefined as any;
+    // clear the singleton instance
+    (this.instance as unknown) = undefined as unknown as DynamoDBDocumentClient;
   }
 }

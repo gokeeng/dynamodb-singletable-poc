@@ -1,6 +1,7 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { Order, OrderEntity, OrderStatus } from '../models/order';
-import { BaseEntity, KeyBuilder } from '../dal/base';
+import { BaseEntity } from '../dal/base';
+import { KeyBuilder } from '../dal/key-builder';
 
 export class OrderService {
   constructor(private dynamoService: DynamoDBService) {}
@@ -27,15 +28,11 @@ export class OrderService {
    */
   async getOrdersByCustomer(customerId: string, limit?: number): Promise<Order[]> {
     const gsi1Keys = KeyBuilder.ordersByCustomerGSI1(customerId);
-    const result = await this.dynamoService.queryGSI1<Order>(
-      gsi1Keys.gsi1pk,
-      gsi1Keys.gsi1sk,
-      { 
-        limit,
-        scanIndexForward: false // Most recent orders first
-      }
-    );
-    
+    const result = await this.dynamoService.queryGSI1<Order>(gsi1Keys.gsi1pk, gsi1Keys.gsi1sk, {
+      limit,
+      scanIndexForward: false, // Most recent orders first
+    });
+
     return result.items;
   }
 
@@ -44,15 +41,11 @@ export class OrderService {
    */
   async getOrdersByStatus(status: OrderStatus, limit?: number): Promise<Order[]> {
     const gsi2pk = `ORDER#STATUS#${status}`;
-    const result = await this.dynamoService.queryGSI2<Order>(
-      gsi2pk,
-      undefined,
-      { 
-        limit,
-        scanIndexForward: false // Most recent orders first
-      }
-    );
-    
+    const result = await this.dynamoService.queryGSI2<Order>(gsi2pk, undefined, {
+      limit,
+      scanIndexForward: false, // Most recent orders first
+    });
+
     return result.items;
   }
 
@@ -66,7 +59,7 @@ export class OrderService {
     }
 
     const updatedOrder = OrderEntity.updateStatus(currentOrder, newStatus);
-    
+
     // Update the order in the database
     await this.dynamoService.putItem(updatedOrder);
     return updatedOrder;
@@ -82,7 +75,7 @@ export class OrderService {
     }
 
     const updatedOrder = OrderEntity.addTrackingNumber(currentOrder, trackingNumber);
-    
+
     await this.dynamoService.putItem(updatedOrder);
     return updatedOrder;
   }
@@ -96,18 +89,14 @@ export class OrderService {
     const cutoffISO = cutoffDate.toISOString();
 
     const gsi2pk = `ORDER#STATUS#${status}`;
-    const result = await this.dynamoService.queryGSI2<Order>(
-      gsi2pk,
-      undefined,
-      {
-        filterExpression: 'orderDate >= :cutoffDate',
-        expressionAttributeValues: {
-          ':cutoffDate': cutoffISO
-        },
-        scanIndexForward: false
-      }
-    );
-    
+    const result = await this.dynamoService.queryGSI2<Order>(gsi2pk, undefined, {
+      filterExpression: 'orderDate >= :cutoffDate',
+      expressionAttributeValues: {
+        ':cutoffDate': cutoffISO,
+      },
+      scanIndexForward: false,
+    });
+
     return result.items;
   }
 
@@ -115,24 +104,20 @@ export class OrderService {
    * Get orders within a date range for a customer
    */
   async getCustomerOrdersByDateRange(
-    customerId: string, 
-    startDate: string, 
+    customerId: string,
+    startDate: string,
     endDate: string
   ): Promise<Order[]> {
     const gsi1Keys = KeyBuilder.ordersByCustomerGSI1(customerId);
-    const result = await this.dynamoService.queryGSI1<Order>(
-      gsi1Keys.gsi1pk,
-      gsi1Keys.gsi1sk,
-      {
-        filterExpression: 'orderDate BETWEEN :startDate AND :endDate',
-        expressionAttributeValues: {
-          ':startDate': startDate,
-          ':endDate': endDate
-        },
-        scanIndexForward: false
-      }
-    );
-    
+    const result = await this.dynamoService.queryGSI1<Order>(gsi1Keys.gsi1pk, gsi1Keys.gsi1sk, {
+      filterExpression: 'orderDate BETWEEN :startDate AND :endDate',
+      expressionAttributeValues: {
+        ':startDate': startDate,
+        ':endDate': endDate,
+      },
+      scanIndexForward: false,
+    });
+
     return result.items;
   }
 
@@ -153,16 +138,16 @@ export class OrderService {
     totalSpent: number;
     ordersByStatus: Record<OrderStatus, number>;
   }> {
-  const orders = await this.getOrdersByCustomer(customerId);
-    
+    const orders = await this.getOrdersByCustomer(customerId);
+
     const stats = {
       totalOrders: orders.length,
-  totalSpent: orders.reduce((total: number, order: Order) => total + order.totalAmount, 0),
-      ordersByStatus: {} as Record<OrderStatus, number>
+      totalSpent: orders.reduce((total: number, order: Order) => total + order.totalAmount, 0),
+      ordersByStatus: {} as Record<OrderStatus, number>,
     };
 
     // Initialize status counts
-    Object.values(OrderStatus).forEach(status => {
+    Object.values(OrderStatus).forEach((status) => {
       stats.ordersByStatus[status] = 0;
     });
 

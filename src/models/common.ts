@@ -1,5 +1,5 @@
 export interface Addresses {
-    [name: string]: Address;
+  [name: string]: Address;
 }
 
 export interface Address {
@@ -10,14 +10,7 @@ export interface Address {
   country: string;
 }
 
-export interface UserPreferences {
-  newsletterSubscribed: boolean;
-  theme: 'light' | 'dark';
-  language: string;
-}
-
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED'
 }

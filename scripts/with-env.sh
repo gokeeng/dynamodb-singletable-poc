@@ -76,6 +76,10 @@ export AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION"
 export DYNAMODB_ENDPOINT="$DYNAMODB_ENDPOINT"
 export TABLE_NAME="$TABLE_NAME"
 export AWS_PAGER="$AWS_PAGER"
+export PAGER=${PAGER:-cat}
+# Some AWS CLI versions still attempt to use a pager; explicitly disable it and add
+# the AWS_NO_PAGER hint to be safe in CI and LocalStack environments.
+export AWS_NO_PAGER=1
 
 if [ $QUIET -ne 1 ]; then
 	echo "🌍 Environment configured for LocalStack:"

@@ -11,7 +11,7 @@ npm run setup
 # Seed sample data
 npm run demo:seed
 
-# Run query examples  
+# Run query examples
 npm run demo:query
 ```
 
@@ -82,31 +82,33 @@ npm run localstack:stop      # Stop LocalStack
 npm run stack:deploy         # Deploy DynamoDB table (uses --endpoint-url to talk to LocalStack)
 
 ```
+
 import { CustomerService } from './services/customer-service';
 import { OrderService } from './services/order-service';
 
 // Create customer with multiple addresses
 const customer = await customerService.createCustomer({
-  customerId: 'customer-123',
-  email: 'john@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  address: {
-    home: { addressLine1: '123 Main St', city: 'NYC' },
-    work: { addressLine1: '456 Office Ave', city: 'NYC' }
-  }
+customerId: 'customer-123',
+email: 'john@example.com',
+firstName: 'John',
+lastName: 'Doe',
+address: {
+home: { addressLine1: '123 Main St', city: 'NYC' },
+work: { addressLine1: '456 Office Ave', city: 'NYC' }
+}
 });
 
 // Get customer's order history
 const orders = await orderService.getOrdersByCustomer(customer.pk.split('#')[1]);
-```
+
+````
 
 - If the LocalStack health endpoint isn't ready, `npm run setup` will wait and print logs. You can also check:
 
 ```bash
 curl -s http://localhost:4566/health | jq .
 docker-compose logs -f localstack
-```
+````
 
 - If `aws` CLI commands seem to hang or get suspended in your shell, ensure you're using the wrapper (`./scripts/with-env.sh ...` or the npm shorthand `npm run with-env -- ...`) which sets `AWS_PAGER=""` and appropriate env vars.
 - On macOS, if you used GNU `timeout` (gtimeout) and don't have it installed, install via `brew install coreutils` or use the wrapper's internal retry logic.
@@ -125,8 +127,8 @@ const customer = await customerService.createCustomer({
   lastName: 'Doe',
   address: {
     home: { addressLine1: '123 Main St', city: 'NYC' },
-    work: { addressLine1: '456 Office Ave', city: 'NYC' }
-  }
+    work: { addressLine1: '456 Office Ave', city: 'NYC' },
+  },
 });
 
 // Get customer's order history
