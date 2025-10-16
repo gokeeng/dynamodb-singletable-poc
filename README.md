@@ -35,6 +35,34 @@ npm run demo:seed
 npm run demo:query
 ```
 
+Run the focused query examples with optional CLI flags:
+
+```bash
+# Use an existing customer id
+npm run demo:query -- --customerId customer-123
+
+# Use an existing order id (and optionally a customer id)
+npm run demo:query -- --orderId order-abc --customerId customer-123
+```
+
+# Override the order status when running the demo (example: DELIVERED)
+
+npm run demo:query -- --status DELIVERED
+
+## Seeding and clearing demo data
+
+Use the following npm scripts to populate or remove the example data (works with LocalStack):
+
+```bash
+# Seed example data (customers, products, orders)
+npm run demo:seed
+
+# Clear seeded example data from the table
+npm run demo:clear
+```
+
+Both scripts run the example TypeScript scripts with the LocalStack-aware wrapper so they pick up the correct env vars and project-local binaries (via `npx`).
+
 Note: it's recommended to run the demo scripts using the npm scripts (shown above) rather than invoking the `./scripts/with-env.sh` wrapper directly. Running via `npm run` ensures project-local binaries (like `ts-node`) from `node_modules/.bin` are available on PATH.
 
 ## Shorthand: npm run with-env
@@ -133,6 +161,15 @@ const customer = await customerService.createCustomer({
 
 // Get customer's order history
 const orders = await orderService.getOrdersByCustomer(customer.pk.split('#')[1]);
+```
+
+Example: update an order status using the `OrderStatus` enum:
+
+```typescript
+import { OrderStatus } from './models/models';
+
+// mark an order as shipped
+await orderService.updateOrderStatus(orderId, OrderStatus.SHIPPED);
 ```
 
 ## Prerequisites

@@ -1,18 +1,29 @@
 import { DynamoDBService } from '../dal/dynamodb-service';
-import { Customer, CustomerEntity } from '../models/customer';
-import { BaseEntity } from '../dal/base';
+import { CustomerEntity, CustomerEmailEntity, Customer, BaseEntity } from '../models/models';
+import { CustomerCreateDto, CustomerUpdateDto, CustomerDto } from '../models/dtos';
+import { toCustomerDto } from '../models/mappers';
 import { KeyBuilder } from '../dal/key-builder';
-import { CustomerEmailEntity } from '../models/customerEmail';
 import ConditionExpressionBuilder from '../dal/condition-expression-builder';
+
 export class CustomerService {
   constructor(private dynamoService: DynamoDBService) {}
 
   /**
    * Create a new customer
    */
-  async createCustomer(customerData: Omit<Customer, keyof BaseEntity>): Promise<Customer> {
-    const customer = CustomerEntity.create(customerData);
-    const customerEmail = CustomerEmailEntity.create(customerData);
+  async createCustomer(customerData: CustomerCreateDto): Promise<CustomerDto> {
+    // Ensure required persistence fields are present and default optional ones
+    const persistenceCustomer: Omit<Customer, keyof BaseEntity> = {
+      customerId: customerData.customerId,
+      email: customerData.email,
+      firstName: customerData.firstName,
+      lastName: customerData.lastName,
+      phone: customerData.phone ?? '',
+      address: customerData.address ?? {},
+    };
+
+    const customer = CustomerEntity.create(persistenceCustomer);
+    const customerEmail = CustomerEmailEntity.create(persistenceCustomer);
 
     await this.dynamoService.transactPutItems([
       {
@@ -25,32 +36,32 @@ export class CustomerService {
       },
     ]);
 
-    return customer as Customer;
+    return toCustomerDto(customer as Customer);
   }
 
   /**
    * Get customer by ID
    */
-  async getCustomerById(customerId: string): Promise<Customer | null> {
+  async getCustomerById(customerId: string): Promise<CustomerDto | null> {
     const pk = KeyBuilder.customerPK(customerId);
     const sk = KeyBuilder.customerSK(customerId);
-    return await this.dynamoService.getItem<Customer>(pk, sk);
+    const res = await this.dynamoService.getItem<Customer>(pk, sk);
+    if (!res) return null;
+    return toCustomerDto(res);
   }
 
   /**
    * Update customer information
    */
-  async updateCustomer(
-    customerId: string,
-    updates: Partial<Pick<Customer, 'firstName' | 'lastName' | 'phone' | 'address'>>
-  ): Promise<Customer> {
+  async updateCustomer(customerId: string, updates: CustomerUpdateDto): Promise<CustomerDto> {
     // Prevent updates to email through this method. Email changes require a dedicated flow.
     if (Object.prototype.hasOwnProperty.call(updates, 'email')) {
       throw new Error('Updating email is not supported via updateCustomer.');
     }
     const pk = KeyBuilder.customerPK(customerId);
     const sk = KeyBuilder.customerSK(customerId);
-    return await this.dynamoService.updateItem<Customer>(pk, sk, updates);
+    const updated = await this.dynamoService.updateItem<Customer>(pk, sk, updates);
+    return toCustomerDto(updated);
   }
 
   /**

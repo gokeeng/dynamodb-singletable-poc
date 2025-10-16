@@ -1,7 +1,7 @@
 export interface ConditionExpressionParts {
   ConditionExpression?: string;
   ExpressionAttributeNames?: Record<string, string>;
-  ExpressionAttributeValues?: Record<string, any>;
+  ExpressionAttributeValues?: Record<string, unknown>;
 }
 
 class AttrHelper {
@@ -52,7 +52,7 @@ class AttrHelper {
 export class ConditionExpressionBuilder {
   parts: string[] = [];
   names: Record<string, string> = {};
-  values: Record<string, any> = {};
+  values: Record<string, unknown> = {};
   private counter = 0;
 
   static attr(name: string): AttrHelper {
@@ -94,7 +94,7 @@ export class ConditionExpressionBuilder {
 
     let expr = this.parts.join(' AND ');
     const names: Record<string, string> = {};
-    const values: Record<string, any> = {};
+    const values: Record<string, unknown> = {};
 
     if (prefix) {
       // remap tokens to include prefix to avoid collisions

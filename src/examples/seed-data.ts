@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { OrderStatus } from '../models/order';
-import { ProductStatus, ProductEntity } from '../models/product';
+import { OrderStatus, ProductStatus, ProductEntity } from '../models/models';
 import { DynamoDBService } from '../dal/dynamodb-service';
 import { OrderService } from '../services/order-service';
 import { CustomerService } from '../services/customer-service';
@@ -108,7 +107,6 @@ async function seedData(): Promise<void> {
     const order1 = await orderService.createOrder({
       orderId: uuidv4(),
       customerId: customer1.customerId,
-      status: OrderStatus.DELIVERED,
       totalAmount: 229.98,
       currency: 'USD',
       items: [
@@ -128,11 +126,11 @@ async function seedData(): Promise<void> {
         },
       ],
       shippingAddress: {
-        street: customer1.address.home!.street,
-        city: customer1.address.home!.city,
-        state: customer1.address.home!.state,
-        zipCode: customer1.address.home!.zipCode,
-        country: customer1.address.home!.country,
+        street: customer1.address?.home?.street ?? '',
+        city: customer1.address?.home?.city ?? '',
+        state: customer1.address?.home?.state ?? '',
+        zipCode: customer1.address?.home?.zipCode ?? '',
+        country: customer1.address?.home?.country ?? '',
       },
       paymentMethod: {
         type: 'CREDIT_CARD',
@@ -140,16 +138,15 @@ async function seedData(): Promise<void> {
         brand: 'Visa',
       },
       orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-      shippedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-      deliveredDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      trackingNumber: 'TRK123456789',
     });
     console.log(`✅ Created order: ${order1.orderId}`);
+
+    // Mark the first order as delivered so timestamps are populated via updateOrderStatus
+    await orderService.updateOrderStatus(order1.orderId, OrderStatus.DELIVERED);
 
     const order2 = await orderService.createOrder({
       orderId: uuidv4(),
       customerId: customer2.customerId,
-      status: OrderStatus.PROCESSING,
       totalAmount: 399.98,
       currency: 'USD',
       items: [
@@ -162,11 +159,11 @@ async function seedData(): Promise<void> {
         },
       ],
       shippingAddress: {
-        street: customer2.address.home!.street,
-        city: customer2.address.home!.city,
-        state: customer2.address.home!.state,
-        zipCode: customer2.address.home!.zipCode,
-        country: customer2.address.home!.country,
+        street: customer2.address?.home?.street ?? '',
+        city: customer2.address?.home?.city ?? '',
+        state: customer2.address?.home?.state ?? '',
+        zipCode: customer2.address?.home?.zipCode ?? '',
+        country: customer2.address?.home?.country ?? '',
       },
       paymentMethod: {
         type: 'PAYPAL',
@@ -177,7 +174,7 @@ async function seedData(): Promise<void> {
 
     console.log('🎉 Data seeding completed successfully!');
     console.log(
-      `\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`
+      `\n- Customers created: 2\n- Products created: 2\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`
     );
   } catch (error) {
     console.error('❌ Error seeding data:', error);

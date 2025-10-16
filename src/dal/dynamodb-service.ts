@@ -11,20 +11,20 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClientFactory } from './dynamodb-client';
-import { BaseEntity } from './base';
+import { BaseEntity } from '../models/models';
 
 export interface QueryOptions {
   limit?: number;
-  exclusiveStartKey?: Record<string, any>;
+  exclusiveStartKey?: Record<string, unknown>;
   scanIndexForward?: boolean;
   filterExpression?: string;
-  expressionAttributeValues?: Record<string, any>;
-  expressionAttributeNames?: Record<string, any>;
+  expressionAttributeValues?: Record<string, unknown>;
+  expressionAttributeNames?: Record<string, string>;
 }
 
 export interface QueryResult<T> {
   items: T[];
-  lastEvaluatedKey?: Record<string, any>;
+  lastEvaluatedKey?: Record<string, unknown>;
   count: number;
   scannedCount: number;
 }
@@ -74,7 +74,7 @@ export class DynamoDBService {
   ): Promise<T> {
     const updateExpression: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeValues: Record<string, unknown> = {};
 
     // Add UpdatedAt timestamp
     const updatesWithTimestamp = {
@@ -179,7 +179,7 @@ export class DynamoDBService {
     skValue: any,
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
-    const expressionAttributeValues: Record<string, any> = {
+    const expressionAttributeValues: Record<string, unknown> = {
       ':pk': pk,
       ...options.expressionAttributeValues,
     };
@@ -219,7 +219,7 @@ export class DynamoDBService {
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
     let keyConditionExpression = 'gsi1pk = :gsi1pk';
-    const expressionAttributeValues: Record<string, any> = {
+    const expressionAttributeValues: Record<string, unknown> = {
       ':gsi1pk': gsi1pk,
       ...options.expressionAttributeValues,
     };
@@ -260,7 +260,7 @@ export class DynamoDBService {
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
     let keyConditionExpression = 'gsi2pk = :gsi2pk';
-    const expressionAttributeValues: Record<string, any> = {
+    const expressionAttributeValues: Record<string, unknown> = {
       ':gsi2pk': gsi2pk,
       ...options.expressionAttributeValues,
     };
@@ -297,7 +297,8 @@ export class DynamoDBService {
    */
   async batchWrite<T extends BaseEntity>(
     putItems: T[] = [],
-    deleteKeys: Array<{ PK: string; SK: string }> = []
+    // keys must match actual table attribute names (pk, sk)
+    deleteKeys: Array<{ pk: string; sk: string }> = []
   ): Promise<void> {
     const requests: any[] = [];
 
@@ -335,7 +336,7 @@ export class DynamoDBService {
   /**
    * Batch get items
    */
-  async batchGet<T extends BaseEntity>(keys: Array<{ PK: string; SK: string }>): Promise<T[]> {
+  async batchGet<T extends BaseEntity>(keys: Array<{ pk: string; sk: string }>): Promise<T[]> {
     const items: T[] = [];
 
     // DynamoDB batch get has a limit of 100 items
@@ -369,7 +370,7 @@ export class DynamoDBService {
     entries: Array<{
       Item: BaseEntity;
       ConditionExpression?: string;
-      ExpressionAttributeValues?: Record<string, any>;
+      ExpressionAttributeValues?: Record<string, unknown>;
       ExpressionAttributeNames?: Record<string, string>;
     }>
   ): Promise<void> {
@@ -395,6 +396,98 @@ export class DynamoDBService {
       }
 
       return { Put: put };
+    });
+
+    const command = new TransactWriteCommand({
+      TransactItems: transactItems,
+    });
+
+    await this.client.send(command as any);
+  }
+
+  /**
+   * Perform a general TransactWrite with mixed Put/Delete/Update actions.
+   * Each entry may be of the form: { Put: { Item, ... } } | { Delete: { Key, ... } } | { Update: { Key, UpdateExpression, ... } }
+   */
+  async transactWriteItems(
+    entries: Array<
+      | {
+          Put: {
+            Item: BaseEntity;
+            ConditionExpression?: string;
+            ExpressionAttributeValues?: Record<string, unknown>;
+            ExpressionAttributeNames?: Record<string, string>;
+          };
+        }
+      | {
+          Delete: {
+            Key: Record<string, unknown>;
+            ConditionExpression?: string;
+            ExpressionAttributeValues?: Record<string, unknown>;
+            ExpressionAttributeNames?: Record<string, string>;
+          };
+        }
+      | {
+          Update: {
+            Key: Record<string, unknown>;
+            UpdateExpression: string;
+            ExpressionAttributeNames?: Record<string, string>;
+            ExpressionAttributeValues?: Record<string, unknown>;
+            ConditionExpression?: string;
+          };
+        }
+    >
+  ): Promise<void> {
+    if (!entries || entries.length === 0) return;
+
+    const transactItems = entries.map((e) => {
+      if ((e as any).Put) {
+        const p = (e as any).Put;
+        const put: any = {
+          TableName: this.tableName,
+          Item: p.Item,
+        };
+
+        if (p.ConditionExpression) put.ConditionExpression = p.ConditionExpression;
+        if (p.ExpressionAttributeValues)
+          put.ExpressionAttributeValues = p.ExpressionAttributeValues;
+        if (p.ExpressionAttributeNames) put.ExpressionAttributeNames = p.ExpressionAttributeNames;
+
+        return { Put: put };
+      }
+
+      if ((e as any).Delete) {
+        const d = (e as any).Delete;
+        const del: any = {
+          TableName: this.tableName,
+          Key: d.Key,
+        };
+
+        if (d.ConditionExpression) del.ConditionExpression = d.ConditionExpression;
+        if (d.ExpressionAttributeValues)
+          del.ExpressionAttributeValues = d.ExpressionAttributeValues;
+        if (d.ExpressionAttributeNames) del.ExpressionAttributeNames = d.ExpressionAttributeNames;
+
+        return { Delete: del };
+      }
+
+      if ((e as any).Update) {
+        const u = (e as any).Update;
+        const upd: any = {
+          TableName: this.tableName,
+          Key: u.Key,
+          UpdateExpression: u.UpdateExpression,
+        };
+
+        if (u.ExpressionAttributeNames) upd.ExpressionAttributeNames = u.ExpressionAttributeNames;
+        if (u.ExpressionAttributeValues)
+          upd.ExpressionAttributeValues = u.ExpressionAttributeValues;
+        if (u.ConditionExpression) upd.ConditionExpression = u.ConditionExpression;
+
+        return { Update: upd };
+      }
+
+      throw new Error('Invalid transact write entry');
     });
 
     const command = new TransactWriteCommand({
