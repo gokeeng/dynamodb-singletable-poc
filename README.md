@@ -15,8 +15,6 @@ npm run demo:seed
 npm run demo:examples
 ```
 
-(README cleaned to remove duplication and stray snippet)
-
 - If the LocalStack health endpoint isn't ready, `npm run setup` will wait and print logs. You can also check:
 
 ```bash
@@ -31,7 +29,7 @@ docker-compose logs -f localstack
 
 This repository is a focused proof-of-concept. It demonstrates:
 
-- Single table design with multiple entity types
+- Single table design with multiple entity types and access patterns
 - Efficient access patterns using GSIs (Global Secondary Indexes)
 - TypeScript models with strong typing
 - A small service layer abstraction (CustomerService, OrderService)
@@ -88,7 +86,7 @@ const customer = await customerService.createCustomer({
 });
 
 // Get customer's order history
-const orders = await orderService.getOrdersByCustomer(customer.pk.split('#')[1]);
+const orders = await orderService.getOrdersByCustomer(customer.customerId);
 ```
 
 Example: update an order status using the `OrderStatus` enum:
