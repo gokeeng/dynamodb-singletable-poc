@@ -10,7 +10,9 @@ import {
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+// no direct low-level types required; we rely on the DocumentClient wrappers from lib-dynamodb
 import { DynamoDBClientFactory } from './dynamodb-client';
+import { TransactWriteItem } from '@aws-sdk/client-dynamodb';
 import { BaseEntity } from '../models/models';
 
 export interface QueryOptions {
@@ -37,6 +39,8 @@ export class DynamoDBService {
     this.client = client || DynamoDBClientFactory.getInstance();
     this.tableName = tableName || process.env.TABLE_NAME || 'Bookstore';
   }
+
+  // (no helper methods)
 
   /**
    * Put an item into the table
@@ -70,7 +74,7 @@ export class DynamoDBService {
   async updateItem<T extends BaseEntity>(
     pk: string,
     sk: string,
-    updates: Partial<Omit<T, 'PK' | 'SK'>>
+    updates: Partial<Omit<T, 'pk' | 'sk'>>
   ): Promise<T> {
     const updateExpression: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
@@ -79,7 +83,7 @@ export class DynamoDBService {
     // Add UpdatedAt timestamp
     const updatesWithTimestamp = {
       ...updates,
-      UpdatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     Object.entries(updatesWithTimestamp).forEach(([key, value], index) => {
@@ -88,7 +92,7 @@ export class DynamoDBService {
 
       updateExpression.push(`${attributeName} = ${attributeValue}`);
       expressionAttributeNames[attributeName] = key;
-      expressionAttributeValues[attributeValue] = value;
+      expressionAttributeValues[attributeValue] = value as unknown;
     });
 
     const command = new UpdateCommand({
@@ -176,7 +180,7 @@ export class DynamoDBService {
   async queryByPKAndSK<T extends BaseEntity>(
     pk: string,
     skCondition: string,
-    skValue: any,
+    skValue: string | number | unknown,
     options: QueryOptions = {}
   ): Promise<QueryResult<T>> {
     const expressionAttributeValues: Record<string, unknown> = {
@@ -300,7 +304,8 @@ export class DynamoDBService {
     // keys must match actual table attribute names (pk, sk)
     deleteKeys: Array<{ pk: string; sk: string }> = []
   ): Promise<void> {
-    const requests: any[] = [];
+    // Create request objects for put and delete
+    const requests: Array<Record<string, unknown>> = [];
 
     putItems.forEach((item) => {
       requests.push({
@@ -321,15 +326,38 @@ export class DynamoDBService {
     // DynamoDB batch write has a limit of 25 items
     const batchSize = 25;
     for (let i = 0; i < requests.length; i += batchSize) {
-      const batch = requests.slice(i, i + batchSize);
+      let batch = requests.slice(i, i + batchSize);
 
-      const command = new BatchWriteCommand({
-        RequestItems: {
-          [this.tableName]: batch,
-        },
-      });
+      // Retry unprocessed items with exponential backoff (best-effort)
+      let attempt = 0;
+      const maxAttempts = 5;
+      let unprocessed: Record<string, unknown> | undefined;
 
-      await this.client.send(command);
+      do {
+        const command = new BatchWriteCommand({
+          RequestItems: {
+            [this.tableName]: batch,
+          },
+        });
+
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.client.send(command);
+
+        // `result` shape depends on the command; narrow to expected optional field
+        const raw = (result as unknown as { UnprocessedItems?: Record<string, unknown> })
+          .UnprocessedItems;
+
+        if (raw && Object.keys(raw).length && Array.isArray(raw[this.tableName])) {
+          // prepare next batch with the unprocessed items
+          batch = raw[this.tableName] as unknown as Record<string, unknown>[];
+          attempt += 1;
+          // backoff
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 50));
+        } else {
+          unprocessed = undefined;
+        }
+      } while (unprocessed && attempt < maxAttempts);
     }
   }
 
@@ -376,33 +404,34 @@ export class DynamoDBService {
   ): Promise<void> {
     if (!entries || entries.length === 0) return;
 
-    // Build TransactItems array
-    const transactItems = entries.map((e) => {
-      const put: any = {
+    // Build TransactWriteItem[] using SDK types so we avoid `any`
+    const transactItems: TransactWriteItem[] = entries.map((e) => {
+      const put: Record<string, unknown> = {
         TableName: this.tableName,
-        Item: e.Item,
+        Item: e.Item as unknown as Record<string, unknown>,
       };
 
       if (e.ConditionExpression) {
-        put.ConditionExpression = e.ConditionExpression;
+        (put as Record<string, unknown>)['ConditionExpression'] = e.ConditionExpression;
       }
 
       if (e.ExpressionAttributeValues) {
-        put.ExpressionAttributeValues = e.ExpressionAttributeValues;
+        (put as Record<string, unknown>)['ExpressionAttributeValues'] =
+          e.ExpressionAttributeValues as Record<string, unknown>;
       }
 
       if (e.ExpressionAttributeNames) {
-        put.ExpressionAttributeNames = e.ExpressionAttributeNames;
+        (put as Record<string, unknown>)['ExpressionAttributeNames'] = e.ExpressionAttributeNames;
       }
 
-      return { Put: put };
+      return { Put: put } as unknown as TransactWriteItem;
     });
 
     const command = new TransactWriteCommand({
       TransactItems: transactItems,
     });
 
-    await this.client.send(command as any);
+    await this.client.send(command);
   }
 
   /**
@@ -440,51 +469,77 @@ export class DynamoDBService {
   ): Promise<void> {
     if (!entries || entries.length === 0) return;
 
-    const transactItems = entries.map((e) => {
-      if ((e as any).Put) {
-        const p = (e as any).Put;
-        const put: any = {
+    // Build TransactWriteItem[] using SDK types so we avoid explicit any casts
+    const transactItems: TransactWriteItem[] = entries.map((entry) => {
+      const e = entry as unknown as {
+        Put?: {
+          Item: BaseEntity;
+          ConditionExpression?: string;
+          ExpressionAttributeValues?: Record<string, unknown>;
+          ExpressionAttributeNames?: Record<string, string>;
+        };
+        Delete?: {
+          Key: Record<string, unknown>;
+          ConditionExpression?: string;
+          ExpressionAttributeValues?: Record<string, unknown>;
+          ExpressionAttributeNames?: Record<string, string>;
+        };
+        Update?: {
+          Key: Record<string, unknown>;
+          UpdateExpression: string;
+          ExpressionAttributeNames?: Record<string, string>;
+          ExpressionAttributeValues?: Record<string, unknown>;
+          ConditionExpression?: string;
+        };
+      };
+
+      if (e.Put) {
+        const p = e.Put;
+        const put: Record<string, unknown> = {
           TableName: this.tableName,
-          Item: p.Item,
+          Item: p.Item as unknown as Record<string, unknown>,
         };
 
-        if (p.ConditionExpression) put.ConditionExpression = p.ConditionExpression;
+        if (p.ConditionExpression) put['ConditionExpression'] = p.ConditionExpression;
         if (p.ExpressionAttributeValues)
-          put.ExpressionAttributeValues = p.ExpressionAttributeValues;
-        if (p.ExpressionAttributeNames) put.ExpressionAttributeNames = p.ExpressionAttributeNames;
+          put['ExpressionAttributeValues'] = p.ExpressionAttributeValues as Record<string, unknown>;
+        if (p.ExpressionAttributeNames)
+          put['ExpressionAttributeNames'] = p.ExpressionAttributeNames;
 
-        return { Put: put };
+        return { Put: put } as unknown as TransactWriteItem;
       }
 
-      if ((e as any).Delete) {
-        const d = (e as any).Delete;
-        const del: any = {
+      if (e.Delete) {
+        const d = e.Delete;
+        const del: Record<string, unknown> = {
           TableName: this.tableName,
           Key: d.Key,
         };
 
-        if (d.ConditionExpression) del.ConditionExpression = d.ConditionExpression;
+        if (d.ConditionExpression) del['ConditionExpression'] = d.ConditionExpression;
         if (d.ExpressionAttributeValues)
-          del.ExpressionAttributeValues = d.ExpressionAttributeValues;
-        if (d.ExpressionAttributeNames) del.ExpressionAttributeNames = d.ExpressionAttributeNames;
+          del['ExpressionAttributeValues'] = d.ExpressionAttributeValues as Record<string, unknown>;
+        if (d.ExpressionAttributeNames)
+          del['ExpressionAttributeNames'] = d.ExpressionAttributeNames;
 
-        return { Delete: del };
+        return { Delete: del } as unknown as TransactWriteItem;
       }
 
-      if ((e as any).Update) {
-        const u = (e as any).Update;
-        const upd: any = {
+      if (e.Update) {
+        const u = e.Update;
+        const upd: Record<string, unknown> = {
           TableName: this.tableName,
           Key: u.Key,
           UpdateExpression: u.UpdateExpression,
         };
 
-        if (u.ExpressionAttributeNames) upd.ExpressionAttributeNames = u.ExpressionAttributeNames;
+        if (u.ExpressionAttributeNames)
+          upd['ExpressionAttributeNames'] = u.ExpressionAttributeNames;
         if (u.ExpressionAttributeValues)
-          upd.ExpressionAttributeValues = u.ExpressionAttributeValues;
-        if (u.ConditionExpression) upd.ConditionExpression = u.ConditionExpression;
+          upd['ExpressionAttributeValues'] = u.ExpressionAttributeValues as Record<string, unknown>;
+        if (u.ConditionExpression) upd['ConditionExpression'] = u.ConditionExpression;
 
-        return { Update: upd };
+        return { Update: upd } as unknown as TransactWriteItem;
       }
 
       throw new Error('Invalid transact write entry');
@@ -494,6 +549,6 @@ export class DynamoDBService {
       TransactItems: transactItems,
     });
 
-    await this.client.send(command as any);
+    await this.client.send(command);
   }
 }

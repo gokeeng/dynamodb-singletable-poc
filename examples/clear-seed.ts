@@ -1,5 +1,5 @@
-import { DynamoDBService, QueryResult } from '../dal/dynamodb-service';
-import { BaseEntity } from '../models/models';
+import { DynamoDBService, QueryResult } from "../src/dal/dynamodb-service";
+import { BaseEntity } from "../src/models/models";
 
 async function clearSeed(): Promise<void> {
   const dynamo = new DynamoDBService();

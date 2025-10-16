@@ -10,7 +10,7 @@ export interface BaseEntity {
   gsi1sk?: string; // Global Secondary Index 1 Sort Key
   gsi2pk?: string; // Global Secondary Index 2 Partition Key
   gsi2sk?: string; // Global Secondary Index 2 Sort Key
-  entityType: string; // Type of entity (USER, ORDER, PRODUCT, etc.)
+  entityType: string; // Discriminator for the entity type
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
 }

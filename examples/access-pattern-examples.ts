@@ -1,8 +1,8 @@
-import { DynamoDBService } from '../dal/dynamodb-service';
-import { CustomerService } from '../services/customer-service';
-import { OrderService } from '../services/order-service';
-import { OrderStatus } from '../models/models';
-import { CustomerCreateDto, CustomerUpdateDto, OrderCreateDto, CustomerDto } from '../models/dtos';
+import { DynamoDBService } from "../src/dal/dynamodb-service";
+import { CustomerCreateDto, CustomerDto, CustomerUpdateDto, OrderCreateDto } from "../src/models/dtos";
+import { OrderStatus } from "../src/models/models";
+import { CustomerService } from "../src/services/customer-service";
+import { OrderService } from "../src/services/order-service";
 
 async function demoExamples(): Promise<void> {
   console.log('� Focused examples: Customer and Order flows using DTOs and services only\n');

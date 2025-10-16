@@ -164,7 +164,7 @@ export class OrderService {
   }
 
   /**
-   * Get orders by user using GSI1
+   * Get orders for a customer, most recent first
    */
   async getOrdersForCustomer(customerId: string, limit?: number): Promise<OrderDto[]> {
     const pk = KeyBuilder.customerPK(customerId);

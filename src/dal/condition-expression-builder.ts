@@ -21,7 +21,7 @@ class AttrHelper {
     return this.builder;
   }
 
-  eq(value: any): ConditionExpressionBuilder {
+  eq(value: unknown | string | number | boolean | null): ConditionExpressionBuilder {
     const nameToken = this.builder.nextNameToken();
     const valToken = this.builder.nextValueToken();
     this.builder.names[nameToken] = this.name;
@@ -30,7 +30,7 @@ class AttrHelper {
     return this.builder;
   }
 
-  beginsWith(value: any): ConditionExpressionBuilder {
+  beginsWith(value: unknown | string | number | boolean | null): ConditionExpressionBuilder {
     const nameToken = this.builder.nextNameToken();
     const valToken = this.builder.nextValueToken();
     this.builder.names[nameToken] = this.name;
@@ -39,11 +39,11 @@ class AttrHelper {
     return this.builder;
   }
 
-  contains(value: any): ConditionExpressionBuilder {
+  contains(value: unknown | string | number | boolean | null): ConditionExpressionBuilder {
     const nameToken = this.builder.nextNameToken();
     const valToken = this.builder.nextValueToken();
     this.builder.names[nameToken] = this.name;
-    this.builder.values[valToken] = value;
+    this.builder.values[valToken] = value as unknown;
     this.builder.parts.push(`contains(${nameToken}, ${valToken})`);
     return this.builder;
   }

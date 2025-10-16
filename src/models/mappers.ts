@@ -8,7 +8,7 @@ export function toCustomerDto(entity: Customer): CustomerDto {
     firstName: entity.firstName,
     lastName: entity.lastName,
     phone: entity.phone,
-    address: (entity as unknown as { address?: Record<string, Address> }).address || {},
+    address: (entity.address as Record<string, Address>) || {},
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
   };
@@ -25,20 +25,20 @@ export function toOrderItemDto(item: OrderItem): OrderItemDto {
 }
 
 export function toOrderDto(order: Order, items: OrderItem[] = []): OrderDto {
-  const oAny = order as unknown as {
-    status?: string;
-    shippingAddress?: Record<string, unknown>;
-    paymentMethod?: Record<string, unknown>;
-  };
+  const status = order.status ?? 'UNKNOWN';
+  const shippingAddress =
+    (order as unknown as { shippingAddress?: Record<string, unknown> }).shippingAddress || {};
+  const paymentMethod =
+    (order as unknown as { paymentMethod?: Record<string, unknown> }).paymentMethod || {};
   return {
     orderId: order.orderId,
     customerId: order.customerId,
-    status: oAny.status || 'UNKNOWN',
+    status,
     totalAmount: order.totalAmount,
     currency: order.currency,
     items: items.map(toOrderItemDto),
-    shippingAddress: oAny.shippingAddress || {},
-    paymentMethod: oAny.paymentMethod || {},
+    shippingAddress,
+    paymentMethod,
     orderDate: (order as unknown as { orderDate?: string }).orderDate || '',
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,

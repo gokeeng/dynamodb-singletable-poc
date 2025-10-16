@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
-import { OrderStatus, ProductStatus, ProductEntity } from '../models/models';
-import { DynamoDBService } from '../dal/dynamodb-service';
-import { OrderService } from '../services/order-service';
-import { CustomerService } from '../services/customer-service';
+import { OrderStatus, ProductStatus, ProductEntity } from '../src/models/models';
+import { DynamoDBService } from '../src/dal/dynamodb-service';
+import { OrderService } from '../src/services/order-service';
+import { CustomerService } from '../src/services/customer-service';
 
 async function seedData(): Promise<void> {
   console.log('🌱 Starting data seeding...');
@@ -174,7 +174,13 @@ async function seedData(): Promise<void> {
 
     console.log('🎉 Data seeding completed successfully!');
     console.log(
-      `\n- Customers created: 2\n- Products created: 2\n- Orders created: 2\n\n🚀 You can now run the query examples to see the data in action!\n`
+      `
+- Customers created: 2
+- Products created: 2
+- Orders created: 2
+
+🚀 You can now run the query examples to see the data in action!
+`
     );
   } catch (error) {
     console.error('❌ Error seeding data:', error);
